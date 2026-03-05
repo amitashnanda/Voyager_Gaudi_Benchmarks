@@ -1,0 +1,122 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: gaudi-quant-pod
+  namespace: ananda2-restricted
+spec:
+  restartPolicy: Never
+  volumes:
+    - name: scratch
+      emptyDir: {}
+    - name: ceph-storage
+      hostPath:
+        path: /voyager/ceph/users/ananda2
+        type: Directory
+  hostIPC: true
+  tolerations:
+      - key: "dormant-port"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+      - key: "dedicated"
+        operator: "Equal"
+        value: "gaudi2"
+  affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: synapse
+              operator: In
+              values:
+              - "1.21"
+            - key: oam
+              operator: In
+              values:
+              - "gaudi2"
+  containers:
+    - name: gaudi-container
+      image: vault.habana.ai/gaudi-docker/1.21.4/ubuntu22.04/habanalabs/pytorch-installer-2.6.0:latest
+      # image: vault.habana.ai/gaudi-docker/1.23.0/ubuntu24.04/habanalabs/pytorch-installer-2.9.0:latest
+      volumeMounts:
+        - mountPath: /scratch
+          name: scratch
+        - mountPath: /voyager/ceph/users/ananda2
+          name: ceph-storage
+      resources:
+        limits:
+          memory: 256G
+          cpu: 12
+          habana.ai/gaudi: 1
+          hugepages-2Mi: 30000Mi
+        requests:
+          memory: 256G
+          cpu: 12
+          habana.ai/gaudi: 1
+          hugepages-2Mi: 30000Mi
+      env:
+        - name: PYTHONPATH
+          value: "/voyager/ceph/users/ananda2/site-packages:/usr/local/lib/python3.10/dist-packages"
+        - name: PT_HPU_LAZY_MODE
+          value: "1"
+      command: ["/bin/bash", "-c"]
+      args:
+        - |
+          # ============================================================
+          # Package strategy:
+          #   - torch + habana_frameworks  -> from Docker image (system Python)
+          #   - optimum[habana]            -> system pip (must match Docker's torch)
+          #   - datasets, scikit-learn etc -> persistent on Ceph via --target
+          #   - PYTHONPATH (set in pod env) bridges both
+          #   - PT_HPU_LAZY_MODE=1 (set in pod env) enables lazy mode
+          # ============================================================
+
+
+          PKG_DIR=/voyager/ceph/users/ananda2/site-packages
+          REQS=/voyager/ceph/users/ananda2/Quantization/requirements.txt
+          WORKDIR=/voyager/ceph/users/ananda2/Quantization
+
+          # One-time install: only runs if packages aren't there yet
+          if [ ! -f "${PKG_DIR}/.installed_v3" ]; then
+            echo "First launch: installing optimum[habana] + project deps..."
+
+            # 1. Install optimum[habana] system-wide (must match Docker's torch/habana)
+            # pip install --upgrade-strategy eager optimum[habana]
+          
+          
+
+            # 2. Install project deps (datasets, scikit-learn etc) to persistent Ceph
+            mkdir -p ${PKG_DIR}
+            pip install --target=${PKG_DIR} -r ${REQS}
+
+            touch ${PKG_DIR}/.installed_v3
+            echo "[OK] All packages installed."
+          else
+            echo "[OK] Packages already installed (skipping)."
+          fi
+
+          pip install optimum-habana==1.18.1
+          echo "============================================"
+          echo " Gaudi Quantization Pod Ready"
+          echo " (optimum-habana + GaudiTrainer)"
+          echo "============================================"
+          python --version
+          echo "torch:          $(python -c 'import torch; print(torch.__version__)')"
+          echo "optimum-habana: $(python -c 'import optimum.habana; print(optimum.habana.__version__)' 2>/dev/null || echo 'not found')"
+          echo "datasets:       $(python -c 'import datasets; print(datasets.__version__)')"
+          echo "PT_HPU_LAZY_MODE=${PT_HPU_LAZY_MODE}"
+          echo ""
+          echo "Quick-start (single-card):"
+          echo "  cd ${WORKDIR}"
+          echo "  python PMPQ_sensitivity_hpu.py --sparsity 0.3"
+          echo "  python PMPQ_evaluation_hpu.py"
+          echo ""
+          echo "Quick-start (multi-card, 2 cards):"
+          echo "  cd ${WORKDIR}"
+          echo "  python ../gaudi_spawn.py --world_size 2 --use_mpi PMPQ_sensitivity_hpu.py --sparsity 0.3"
+          echo "  python ../gaudi_spawn.py --world_size 2 --use_mpi PMPQ_evaluation_hpu.py"
+          echo "============================================"
+
+          # Keep pod alive for interactive use via kubectl exec
+          cd ${WORKDIR}
+          sleep infinity

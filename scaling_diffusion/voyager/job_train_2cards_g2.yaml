@@ -1,0 +1,79 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sr3-2cards-pod-scaling-gaudi2
+  namespace: javierhn-sds275
+spec:
+  restartPolicy: Never
+  tolerations:
+     - key: "dedicated"
+       operator: "Equal"
+       value: "gaudi2"
+       effect: "NoSchedule"
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+         - matchExpressions:
+           - key: kubernetes.io/hostname
+             operator: NotIn
+             values:
+              - vgr-1-07
+              - vgr-1-10
+           - key: oam
+             operator: In
+             values:
+              - "gaudi2"
+  volumes:
+    - name: scratch
+      emptyDir: {}
+    - name: mydir
+      hostPath:
+        path: /home/javierhn/models/sr3_scaling_F26
+        type: Directory
+    - name: ceph
+      hostPath:
+        path: /voyager/ceph/users/javierhn
+        type: Directory
+  hostIPC: true
+  containers:
+    - name: gaudi-container
+      image: vault.habana.ai/gaudi-docker/1.21.4/ubuntu22.04/habanalabs/pytorch-installer-2.6.0:latest
+      volumeMounts:
+        - mountPath: /scratch
+          name: scratch
+        - mountPath: /mydir
+          name: mydir 
+        - mountPath: /ceph
+          name: ceph 
+      resources:
+        limits:
+          memory: 32G
+          cpu: 24
+          habana.ai/gaudi: 2
+          hugepages-2Mi: 10000Mi
+        requests:
+          memory: 32G
+          cpu: 24
+          habana.ai/gaudi: 2
+          hugepages-2Mi: 10000Mi
+      command: ["/bin/sh","-c"]
+      args:
+        - >-
+           hl-smi;
+           export N_CARDS=2;
+           export HOME=/scratch/tmp;
+           export PATH=/scratch/tmp/.local/bin:$PATH;
+           export MODEL_PATH=/mydir/Super-Resolution-SR3;
+           export PT_HPU_MAX_COMPOUND_OP_SIZE=2;
+           export PT_HPU_LAZY_MODE=1;
+           cd /mydir;
+           pip install -r $MODEL_PATH/requirements.txt;
+
+           export CMD="python $MODEL_PATH/sr.py \
+                       -p train \
+                       --distributed \
+                       -c /mydir/sr_sr3_64_256_set3_2cards.json";
+           mpirun -n $N_CARDS --bind-to core --map-by socket:PE=6 --rank-by core --report-bindings --allow-run-as-root -x PT_HPU_MAX_COMPOUND_OP_SIZE  $CMD;
+         
+

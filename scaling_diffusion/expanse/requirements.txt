@@ -1,0 +1,11 @@
+# torch>=1.6
+# torchvision
+numpy<2.0
+pandas
+tqdm
+lmdb
+opencv-python-headless
+pillow
+tensorboardx
+wandb
+

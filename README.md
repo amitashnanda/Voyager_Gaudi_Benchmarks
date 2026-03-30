@@ -1,4 +1,4 @@
-# Voyager Gaudi Benchmarks: Mixed-Precision Quantization Framework
+# Perfomance optimization and Comparative Analysis of Generative AI models on Advanced AI Accelerators
 
 ## Overview
 
@@ -257,8 +257,8 @@ plt.savefig('plots/custom_sensitivity.png')
 
 | Dataset | Metric | FP32 Baseline |  | Fake Quantization |  |  |  |  |  | Real Quantization |  |
 |---------|--------|---------------|--|-------------------|--|--|--|--|--|-------------------|--|
-| | | **Gaudi2** | **A100** | **Fake [16,8,4]** |  | **Fake [8,8,4]** |  | **Fake [8,4,4]** |  | **Real [BF16,FP8]** | **Real [FP16,INT8]** |
-| | | | | Gaudi2 | A100 | Gaudi2 | A100 | Gaudi2 | A100 | Gaudi2 | A100 |
+| | |  |  | **Fake [16,8,4]** |  | **Fake [8,8,4]** |  | **Fake [8,4,4]** |  | **Real [BF16,FP8]** | **Real [FP16,INT8]** |
+| | | Gaudi2 |A100  | Gaudi2 | A100 | Gaudi2 | A100 | Gaudi2 | A100 | Gaudi2 | A100 |
 | **WikiText** | Perplexity ↓ | 12.02 | 12.02 | 12.09 | 12.26 | 12.09 | 12.80 | 12.39 | 12.94 | 12.02 | 12.02 |
 | | Compression Ratio | 1× | 1× | 3.47× | 3.47× | 4.80× | 4.80× | 5.93× | 5.93× | 2.42× | 3.77× |
 | | Throughput (tok/s) | 32397 | 17024 | 34235 | 17224 | 33695 | 17203 | 34081 | 17232 | 23484 | 13547 |

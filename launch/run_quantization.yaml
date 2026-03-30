@@ -31,7 +31,8 @@ spec:
               values:
               - "1.21"
             - key: oam
-              operator: In
+              operator: In #--> for gaudi 2
+              # operator: NotIn #--> for gaudi 1
               values:
               - "gaudi2"
   containers:

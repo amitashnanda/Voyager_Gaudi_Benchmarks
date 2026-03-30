@@ -1,0 +1,200 @@
+{
+  "timestamp": "20260329_070349",
+  "run_dir": "hellaswag_fp8_runs/hellaswag_fp8_20260329_065502",
+  "model_name_or_path": "TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T",
+  "sensitivity_json": "Sensitivities_submodule/submodule_sens_TinyLlama-1.1B-intermediate-step-1431k-3T_train_pruning_s30_n2000_20260326_072502.json",
+  "target_family": "mlp_only",
+  "clustering": "percentile",
+  "n_clusters": 2,
+  "max_fp8_modules": 0,
+  "fp8_modules": [
+    "model.layers.0.mlp.gate_proj",
+    "model.layers.10.mlp.gate_proj",
+    "model.layers.10.mlp.up_proj",
+    "model.layers.12.mlp.down_proj",
+    "model.layers.12.mlp.gate_proj",
+    "model.layers.12.mlp.up_proj",
+    "model.layers.13.mlp.down_proj",
+    "model.layers.13.mlp.up_proj",
+    "model.layers.14.mlp.down_proj",
+    "model.layers.14.mlp.gate_proj",
+    "model.layers.14.mlp.up_proj",
+    "model.layers.15.mlp.gate_proj",
+    "model.layers.16.mlp.up_proj",
+    "model.layers.18.mlp.down_proj",
+    "model.layers.18.mlp.gate_proj",
+    "model.layers.19.mlp.gate_proj",
+    "model.layers.2.mlp.gate_proj",
+    "model.layers.20.mlp.down_proj",
+    "model.layers.20.mlp.up_proj",
+    "model.layers.4.mlp.down_proj",
+    "model.layers.5.mlp.down_proj",
+    "model.layers.6.mlp.up_proj",
+    "model.layers.7.mlp.gate_proj",
+    "model.layers.8.mlp.gate_proj",
+    "model.layers.8.mlp.up_proj"
+  ],
+  "blocklist_names": [
+    "lm_head",
+    "model.norm",
+    "model.embed_tokens",
+    "embed_tokens"
+  ],
+  "layer_precision_map": {
+    "0": "FP8",
+    "1": "BF16",
+    "2": "FP8",
+    "3": "BF16",
+    "4": "FP8",
+    "5": "FP8",
+    "6": "FP8",
+    "7": "FP8",
+    "8": "FP8",
+    "9": "BF16",
+    "10": "FP8",
+    "11": "BF16",
+    "12": "FP8",
+    "13": "FP8",
+    "14": "FP8",
+    "15": "FP8",
+    "16": "FP8",
+    "17": "BF16",
+    "18": "FP8",
+    "19": "FP8",
+    "20": "FP8",
+    "21": "BF16"
+  },
+  "layer_fp8_submodules": {
+    "0": [
+      "mlp.gate_proj"
+    ],
+    "1": [],
+    "2": [
+      "mlp.gate_proj"
+    ],
+    "3": [],
+    "4": [
+      "mlp.down_proj"
+    ],
+    "5": [
+      "mlp.down_proj"
+    ],
+    "6": [
+      "mlp.up_proj"
+    ],
+    "7": [
+      "mlp.gate_proj"
+    ],
+    "8": [
+      "mlp.gate_proj",
+      "mlp.up_proj"
+    ],
+    "9": [],
+    "10": [
+      "mlp.gate_proj",
+      "mlp.up_proj"
+    ],
+    "11": [],
+    "12": [
+      "mlp.down_proj",
+      "mlp.gate_proj",
+      "mlp.up_proj"
+    ],
+    "13": [
+      "mlp.down_proj",
+      "mlp.up_proj"
+    ],
+    "14": [
+      "mlp.down_proj",
+      "mlp.gate_proj",
+      "mlp.up_proj"
+    ],
+    "15": [
+      "mlp.gate_proj"
+    ],
+    "16": [
+      "mlp.up_proj"
+    ],
+    "17": [],
+    "18": [
+      "mlp.down_proj",
+      "mlp.gate_proj"
+    ],
+    "19": [
+      "mlp.gate_proj"
+    ],
+    "20": [
+      "mlp.down_proj",
+      "mlp.up_proj"
+    ],
+    "21": []
+  },
+  "fp8_layers": [
+    0,
+    2,
+    4,
+    5,
+    6,
+    7,
+    8,
+    10,
+    12,
+    13,
+    14,
+    15,
+    16,
+    18,
+    19,
+    20
+  ],
+  "bf16_layers": [
+    1,
+    3,
+    9,
+    11,
+    17,
+    21
+  ],
+  "dump_stats_path": "hellaswag_fp8_runs/hellaswag_fp8_20260329_065502/inc_output/measure",
+  "measure_config_path": "hellaswag_fp8_runs/hellaswag_fp8_20260329_065502/fp8_measure.json",
+  "quant_config_path": "hellaswag_fp8_runs/hellaswag_fp8_20260329_065502/fp8_quantize.json",
+  "fp8_format": "E4M3",
+  "hp_dtype": "bf16",
+  "baseline_dtype": "fp32",
+  "scale_method": "maxabs_hw_opt_weight",
+  "scale_params": {
+    "input_backoff": 0.25,
+    "weight_backoff": 0.5
+  },
+  "observer": "maxabs",
+  "measure_exclude": "OUTPUT",
+  "scale_format": "scalar",
+  "use_qdq": false,
+  "fake_quant": false,
+  "calib_split": "train",
+  "eval_split": "validation",
+  "calib_samples": 512,
+  "eval_samples": 10042,
+  "batch_size": 64,
+  "acc_baseline": 56.861183031268666,
+  "acc_fp8": 56.92093208524198,
+  "acc_delta": 0.05974905397331298,
+  "acc_delta_pct": 0.10507880910683169,
+  "eval_time_baseline_s": 863.5525462627411,
+  "eval_time_fp8_s": 707.0176959037781,
+  "throughput_baseline_samp_s": 11.628707533154168,
+  "throughput_fp8_samp_s": 14.203322007610218,
+  "calibration_time_s": 96.97164726257324,
+  "size_estimates": {
+    "total_params": 1100048384.0,
+    "fp32_model_size_mb_est": 4196.3515625,
+    "hp_dtype_model_size_mb_est": 2098.17578125,
+    "mixed_model_size_mb_est": 1823.17578125,
+    "fp8_weight_params": 288358400.0,
+    "fp8_bias_params": 0.0,
+    "compression_ratio_fp32_to_mixed_est": 2.301671405278821
+  },
+  "baseline_state_dict_mb": 4196.3515625,
+  "fp8_state_dict_mb": 1823.17578125,
+  "warning": "Verify patched modules via LOG_LEVEL_INC=1 output: search for 'Patched modules'."
+}

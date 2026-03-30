@@ -1,0 +1,79 @@
+======================================================================
+MIXED-PRECISION PTQ EVALUATION RESULTS (PMPQ + GROUP-WISE) — HellaSwag
+======================================================================
+
+Model: TinyLlama-1.1B
+HuggingFace ID: TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T
+Task: Commonsense Reasoning (HellaSwag, 4-choice)
+Dataset: HellaSwag (Rowan/hellaswag), validation
+Metric: Accuracy (acc_norm)
+Method: PMPQ with Group-Wise Quantization (Simulated/Fake)
+Sensitivity File: sens_TinyLlama-1.1B_HellaSwag_n2000_pruning_s30_20260324_065802.json
+Clustering Strategy: percentile
+Number of Clusters: 3
+Bit Allocation: [8, 8, 4]
+Group Size: 128
+Device: Gaudi HPU (1 cards)
+Platform: Intel Gaudi HPU (direct inference, lazy mode, FP32)
+Num Accelerators: 1
+Samples: 10042
+Timestamp: 20260324_225854
+HPU Peak Memory: 17121.1 MB
+
+----------------------------------------------------------------------
+BASELINE (FP32)
+----------------------------------------------------------------------
+Accuracy: 56.8612%
+Official TinyLlama: 59.20%
+Eval Time: 411.32s
+Throughput: 24.41 samples/s
+
+----------------------------------------------------------------------
+QUANTIZED (Mixed-Precision PTQ via PMPQ + Group-Wise)
+----------------------------------------------------------------------
+Accuracy: 57.0404%
+Eval Time: 312.47s
+Throughput: 32.14 samples/s
+Speedup: 1.32x
+
+----------------------------------------------------------------------
+DEGRADATION
+----------------------------------------------------------------------
+Accuracy Drop: -0.1792pp (-0.32%)
+Quality: EXCELLENT - Minimal degradation
+
+----------------------------------------------------------------------
+COMPRESSION (nn.Linear layers only)
+----------------------------------------------------------------------
+Original Size: 3696.00 MB (Linear weights only)
+Quantized Size: 791.44 MB (Linear weights only)
+Compression Ratio: 4.67x
+Size Reduction: 78.6%
+Note: Excludes embeddings, LayerNorm, and LM head (not quantized).
+Note: Saved model is FP32 dequantized (simulated quantization).
+
+----------------------------------------------------------------------
+LAYER BIT ALLOCATION
+----------------------------------------------------------------------
+Layer  0:  8-bit (sensitivity: 0.2500)
+Layer  1:  8-bit (sensitivity: 0.5500)
+Layer  2:  8-bit (sensitivity: 0.6000)
+Layer  3:  8-bit (sensitivity: 0.5000)
+Layer  4:  4-bit (sensitivity: -0.1000)
+Layer  5:  4-bit (sensitivity: 0.2500)
+Layer  6:  8-bit (sensitivity: 0.5000)
+Layer  7:  8-bit (sensitivity: 0.3500)
+Layer  8:  8-bit (sensitivity: 0.4500)
+Layer  9:  8-bit (sensitivity: 0.5500)
+Layer 10:  4-bit (sensitivity: 0.0000)
+Layer 11:  8-bit (sensitivity: 0.6000)
+Layer 12:  4-bit (sensitivity: 0.0500)
+Layer 13:  8-bit (sensitivity: 0.3000)
+Layer 14:  4-bit (sensitivity: 0.0500)
+Layer 15:  4-bit (sensitivity: 0.2000)
+Layer 16:  8-bit (sensitivity: 0.3000)
+Layer 17:  8-bit (sensitivity: 0.3000)
+Layer 18:  4-bit (sensitivity: 0.1500)
+Layer 19:  8-bit (sensitivity: 0.4500)
+Layer 20:  8-bit (sensitivity: 0.5000)
+Layer 21:  8-bit (sensitivity: 0.7500)

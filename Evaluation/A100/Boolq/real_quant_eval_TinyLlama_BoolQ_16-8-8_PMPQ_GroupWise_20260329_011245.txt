@@ -1,0 +1,250 @@
+================================================================================
+REAL QUANTIZATION EVALUATION RESULTS (PMPQ + GROUP-WISE)
+TinyLlama on BoolQ Validation Set
+================================================================================
+
+================================================================================
+CONFIGURATION
+================================================================================
+Quantization Type: REAL (FP16/INT8 -- weights physically stored in low precision)
+  FP16: weights stored as torch.float16  -- 2x real memory savings
+  INT8: weights stored as torch.int8     -- 4x real memory savings
+        + per-group FP16 scale (group-wise symmetric, GPTQ-style)
+  INT8 forward: dequantize int8->fp16 on-the-fly, then fp16 matmul
+  (weight-only quantization -- same mechanism as GPTQ/bitsandbytes)
+  Note: no 4-bit/2-bit -- requires TorchAO/bitsandbytes for sub-INT8
+Model: TinyLlama-1.1B
+Model HF Hub: TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T
+Task: Reading Comprehension -- Yes/No (BoolQ -- binary)
+Dataset: BoolQ
+Evaluation Split: Validation set
+Evaluation Metrics: Accuracy, Precision, Recall, F1
+Sensitivity Method: PMPQ
+Sensitivity File: sens_PMPQ_TinyLlama_BoolQ_20260329_000300.json
+Clustering Strategy: percentile
+Number of Clusters: 3
+Bit Allocation: [16, 8, 8]
+Allocation Name: 16-8-8
+Group Size: 128
+FP16 layers: 7/22
+INT8 layers: 15/22
+Baseline Source: computed
+Baseline Cache File: Models/baseline_boolq_fp32.json
+Device: cuda
+Num GPUs: 4
+  GPU 0: NVIDIA A100-SXM4-40GB
+  GPU 1: NVIDIA A100-SXM4-40GB
+  GPU 2: NVIDIA A100-SXM4-40GB
+  GPU 3: NVIDIA A100-SXM4-40GB
+Eval Batch Size: 32
+Max Sequence Length: 512
+Timestamp: 20260329_011245
+Saved Model Folder: Models/real_quant_TinyLlama_BoolQ_16-8-8_gs128_percentile_PMPQ
+
+================================================================================
+COMPREHENSIVE TIMING LOG
+================================================================================
+Step                                                    Time                 Seconds     
+---------------------------------------------------------------------------------------
+Sensitivity File Loading                                2.14s                2.1440      
+Model Loading                                           2.88s                2.8792      
+Clustering                                              2.23s                2.2292      
+FP32 Baseline Eval [computed]                           6m 49.88s            409.8766    
+Real Quantization Application (FP16/INT8)               0.68s                0.6823      
+Real-Quantized Model Evaluation                         6m 45.95s            405.9487    
+---------------------------------------------------------------------------------------
+TOTAL PIPELINE TIME                                     14m 4.29s            844.2940    
+
+Phase 1 Sensitivity Computation (from metadata):
+  31m 46.44s  (1906.4354s)
+
+================================================================================
+METRICS BEFORE QUANTIZATION (FP32 Baseline)
+================================================================================
+BoolQ Accuracy  : 0.580734 (58.07%)
+Precision       : 0.667510
+Recall          : 0.648795
+F1 Score        : 0.658019
+TP / FP / FN / TN: 1319 / 657 / 714 / 580
+Correct         : 1899/3270
+Eval Time       : 6m 49.88s
+Throughput      : 7.98 examples/s
+Baseline Source : computed
+Baseline Cache File: Models/baseline_boolq_fp32.json
+
+================================================================================
+METRICS AFTER QUANTIZATION (Group-Wise Real Mixed-Precision PTQ)
+================================================================================
+BoolQ Accuracy  : 0.577676 (57.77%)
+Precision       : 0.667523
+Recall          : 0.638957
+F1 Score        : 0.652928
+TP / FP / FN / TN: 1299 / 647 / 734 / 590
+Correct         : 1889/3270
+Eval Time       : 6m 45.95s
+Throughput      : 8.06 examples/s
+
+================================================================================
+PERFORMANCE COMPARISON
+================================================================================
+Accuracy Drop : +0.003058 (+0.53%)
+F1 Drop       : +0.005092
+Quality Assessment: EXCELLENT -- Minimal degradation
+
+================================================================================
+COMPRESSION METRICS
+================================================================================
+Quantization Type: REAL (weights physically stored in low precision)
+  Compression ratio is derived from bit-level arithmetic.
+  Actual GPU footprint is verified via get_model_size_mb().
+FP32 Weight Size (bit-level count)    : 3696.00 MB
+Quant Weight Size (bit-level count)   : 1227.84 MB
+  (INT8 weights + FP16 group scales overhead)
+Actual GPU Footprint (verified real)  : 1728.20 MB
+Compression Ratio: 3.010x
+Size Reduction: 66.78%
+Quantization Time: 0.6823s
+
+================================================================================
+MACHINE-READABLE METRICS (KEY-VALUE)
+================================================================================
+quantization_type: REAL_FP16_INT8
+model_key: TinyLlama-1.1B
+model_name: TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T
+task: BoolQ
+eval_split: validation
+device: cuda
+num_gpus: 4
+eval_examples: 3270
+sensitivity_method: PMPQ
+clustering_strategy: percentile
+n_clusters: 3
+allocation_name: 16-8-8
+cluster_bits: [16, 8, 8]
+group_size: 128
+fp16_layers: 7
+int8_layers: 15
+baseline_source: computed
+acc_before: 0.580734
+precision_before: 0.667510
+recall_before: 0.648795
+f1_before: 0.658019
+tp_before: 1319
+fp_before: 657
+fn_before: 714
+tn_before: 580
+correct_before: 1899
+total_before: 3270
+fp32_throughput: 7.98
+acc_after: 0.577676
+precision_after: 0.667523
+recall_after: 0.638957
+f1_after: 0.652928
+tp_after: 1299
+fp_after: 647
+fn_after: 734
+tn_after: 590
+correct_after: 1889
+total_after: 3270
+quant_throughput: 8.06
+acc_drop: 0.003058
+acc_drop_pct: 0.53
+f1_drop: 0.005092
+fp32_mb_bit_level: 3696.00
+quant_mb_bit_level: 1227.84
+quant_mb_actual_gpu: 1728.20
+compression_ratio: 3.010
+reduction_pct: 66.78
+saved_model_folder: Models/real_quant_TinyLlama_BoolQ_16-8-8_gs128_percentile_PMPQ
+
+# Timing (seconds):
+sensitivity_file_loading_time_s: 2.1440
+model_loading_time_s: 2.8792
+clustering_time_s: 2.2292
+fp32_evaluation_time_s: 409.8766
+quantization_application_time_s: 0.6823
+quantized_evaluation_time_s: 405.9487
+total_pipeline_time_s: 844.2940
+phase1_sensitivity_time_s: 1906.4354
+
+================================================================================
+LAYER BIT ALLOCATION
+================================================================================
+  layer_00:  8-bit [INT8]  sensitivity: -0.011000
+  layer_01:  8-bit [INT8]  sensitivity: -0.006500
+  layer_02:  8-bit [INT8]  sensitivity: -0.001500
+  layer_03:  8-bit [INT8]  sensitivity: -0.023000
+  layer_04:  8-bit [INT8]  sensitivity: -0.008500
+  layer_05: 16-bit [FP16]  sensitivity: 0.007000
+  layer_06:  8-bit [INT8]  sensitivity: -0.002000
+  layer_07: 16-bit [FP16]  sensitivity: 0.004000
+  layer_08:  8-bit [INT8]  sensitivity: 0.001000
+  layer_09:  8-bit [INT8]  sensitivity: -0.010000
+  layer_10: 16-bit [FP16]  sensitivity: 0.004500
+  layer_11: 16-bit [FP16]  sensitivity: 0.007000
+  layer_12:  8-bit [INT8]  sensitivity: -0.011000
+  layer_13:  8-bit [INT8]  sensitivity: -0.015000
+  layer_14:  8-bit [INT8]  sensitivity: -0.004500
+  layer_15:  8-bit [INT8]  sensitivity: -0.003500
+  layer_16:  8-bit [INT8]  sensitivity: -0.006000
+  layer_17:  8-bit [INT8]  sensitivity: -0.009000
+  layer_18: 16-bit [FP16]  sensitivity: 0.006500
+  layer_19:  8-bit [INT8]  sensitivity: -0.019500
+  layer_20: 16-bit [FP16]  sensitivity: 0.010500
+  layer_21: 16-bit [FP16]  sensitivity: 0.029000
+
+================================================================================
+METHOD NOTES
+================================================================================
+Sensitivity Analysis Method: PMPQ
+  PMPQ (Pruning-based Mixed-Precision Quantization) computes
+  layer sensitivity as the accuracy drop on BoolQ TRAIN split
+  when a fixed percentage of the smallest-magnitude weights in that
+  layer are set to zero. All other layers remain unchanged.
+  sensitivity[i] = baseline_accuracy - pruned_accuracy.
+  Layers with larger accuracy drops are more sensitive and receive
+  higher bit-widths in mixed-precision quantization.
+  Calibration data: Phase 1 training split of BoolQ.
+
+Quantization: REAL (weights stored in FP16 or INT8 on GPU)
+  FP16 layers: weight stored as torch.float16.
+               A100 Tensor Cores run FP16 matmul natively.
+  INT8 layers: weight stored as torch.int8 (1 byte per weight).
+               On-the-fly dequantization: int8 * scale -> fp16.
+               Then fp16 matmul on A100 Tensor Cores.
+               This is weight-only quantization, same as GPTQ.
+
+Group-Wise Quantization:
+  group_size=128: every 128 consecutive weights
+  share one FP16 scale factor. Same approach as GPTQ. Provides
+  finer precision than a single global scale per layer.
+
+Dataset: BoolQ Validation Set
+  Binary reading comprehension benchmark (yes/no questions).
+  Evaluation: log-likelihood scoring of 'yes' and 'no' tokens
+  given the passage + question prompt. Model picks the token
+  with the higher log-likelihood.
+  Metrics: Accuracy, Precision, Recall, F1 (positive class = True).
+
+Multi-GPU:
+  4 A100 GPU(s) via nn.DataParallel.
+  Quantization on CPU then model moved to GPU(s).
+  DataParallel applied AFTER quantization (required order).
+  Eval batch_size=64 split across all GPUs per forward pass.
+  FP32 computation (no autocast) for consistency across scripts.
+
+Clustering: percentile with 3 groups
+  Cluster 0 (rank 0, bits=16 [FP16]): 7 layers, mean sensitivity=0.0098
+  Cluster 1 (rank 1, bits=8 [INT8]): 7 layers, mean sensitivity=-0.0033
+  Cluster 2 (rank 2, bits=8 [INT8]): 8 layers, mean sensitivity=-0.0134
+
+Model saved in HuggingFace .bin sharded format:
+  Folder: Models/real_quant_TinyLlama_BoolQ_16-8-8_gs128_percentile_PMPQ/
+  config.json              -- model architecture & hyperparameters
+  tokenizer.json           -- tokenizer vocabulary & config
+  pytorch_model-*.bin      -- weight shards (500MB each, FP32)
+  pytorch_model.bin.index.json -- maps weight names to shard files
+  quant_config.json        -- quantization configuration
+  Note: .bin files contain FP32 weights (HuggingFace standard).
+  The quant_config.json records original FP16/INT8 assignment
+  per layer so quantization can be exactly reproduced.

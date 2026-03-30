@@ -1,0 +1,100 @@
+================================================================================
+LAYER SENSITIVITY FILE - PRUNING-BASED (PMPQ) ON BOOLQ
+================================================================================
+
+================================================================================
+CONFIGURATION
+================================================================================
+Model: TinyLlama-1.1B
+Model HF Hub: TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T
+Task: Question Answering (BoolQ, Yes/No)
+Dataset: BoolQ (google/boolq)
+Method: PMPQ (Pruning-based Mixed-Precision Quantization)
+Metric: Accuracy (Yes/No log-likelihood)
+Sparsity Level: 30.0%
+Evaluation Set: VALIDATION (9427 samples)
+Samples Used: 2000
+Num Layers: 22
+Hidden Dim: 2048
+Timestamp: 20260324_233245
+Platform: Intel Gaudi HPU (direct inference, lazy mode, FP32)
+Num Accelerators: 1
+Baseline Accuracy: 55.85%
+Official TinyLlama Score: 57.83 (accuracy)
+HPU Peak Memory: 51600.5 MB
+
+================================================================================
+COMPUTE DEVICE MAPPING
+================================================================================
+Model inference (forward pass) → HPU (direct, lazy mode)
+Weight pruning (masking)       → CPU
+Dataset loading                → CPU
+Log-likelihood computation     → CPU
+I/O, logging, saving           → CPU
+
+================================================================================
+COMPUTATION STATISTICS
+================================================================================
+Total Time: 2161.47s
+Time per Layer: 98.25s
+
+================================================================================
+LAYER SENSITIVITIES (PRUNING-BASED - ACCURACY DROP %)
+================================================================================
+Layer      Sensitivity          Rank      
+--------------------------------------------------------------------------------
+layer_2    1.5500               1         
+layer_20   1.5000               2         
+layer_11   0.8500               3         
+layer_21   0.8000               4         
+layer_18   0.5500               5         
+layer_0    0.2000               6         
+layer_6    0.1500               7         
+layer_5    -0.1000              8         
+layer_7    -0.1500              9         
+layer_8    -0.3500              10        
+layer_10   -0.4500              11        
+layer_14   -0.9500              12        
+layer_1    -1.0500              13        
+layer_3    -1.0500              14        
+layer_13   -1.0500              15        
+layer_9    -1.2000              16        
+layer_17   -1.3000              17        
+layer_16   -1.3500              18        
+layer_4    -1.6500              19        
+layer_15   -1.6500              20        
+layer_12   -2.1000              21        
+layer_19   -2.1500              22        
+
+================================================================================
+SENSITIVITY STATISTICS
+================================================================================
+Mean Sensitivity: -0.4977
+Min Sensitivity: -2.1500
+Max Sensitivity: 1.5500
+Std Deviation: 1.0645
+
+================================================================================
+INTERPRETATION
+================================================================================
+Higher sensitivity = Layer is more affected by pruning
+Lower sensitivity = Layer can tolerate more weight removal
+
+Assumption (PMPQ): Layers sensitive to pruning are also
+sensitive to quantization. Use these sensitivities in Phase 2
+to assign different bit-widths for mixed-precision quantization.
+
+================================================================================
+METHOD DETAILS
+================================================================================
+For each layer:
+1. Load fresh model on CPU (patched by optimum-habana)
+2. Apply 30.0% magnitude-based pruning to that layer (CPU)
+3. Move model to HPU, evaluate accuracy on BoolQ (FP32, lazy mode)
+4. Sensitivity = Baseline_Accuracy - Pruned_Accuracy
+
+BoolQ Dataset:
+- Yes/No question answering task
+- Given passage + question, predict True/False
+- Metric: accuracy (log-likelihood of Yes vs No)
+- Matches TinyLlama official benchmark evaluation

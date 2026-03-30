@@ -1,0 +1,9 @@
+{
+  "selection_mode": "clustered",
+  "clustering": "percentile",
+  "n_clusters": 2,
+  "median_threshold": -0.10000000149011612,
+  "candidate_count": 66,
+  "fp8_count": 32,
+  "bf16_count": 34
+}

@@ -1,0 +1,7 @@
+{
+  "timestamp": "20260330_170443",
+  "calib_time_s": 55.88664364814758,
+  "calib_samples": 512,
+  "batch_size": 64,
+  "dump_stats_path": "boolq_fp8_runs/boolq_fp8_20260330_170443/inc_output/measure"
+}

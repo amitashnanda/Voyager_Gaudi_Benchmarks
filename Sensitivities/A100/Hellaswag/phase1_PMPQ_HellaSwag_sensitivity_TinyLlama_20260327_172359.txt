@@ -1,0 +1,233 @@
+================================================================================
+LAYER SENSITIVITY FILE - PRUNING-BASED (PMPQ) ON HELLASWAG
+================================================================================
+
+================================================================================
+CONFIGURATION
+================================================================================
+Model: TinyLlama-1.1B
+Model HF Hub: TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T
+Task: Commonsense Reasoning (HellaSwag -- 4-choice)
+Dataset: HellaSwag
+Method: PMPQ (Pruning-based Mixed-Precision Quantization)
+Sparsity Level: 30%
+Calibration Split: train (first 2000 samples)
+Batch Size: 64
+Tokenization: Max length 2048 tokens, padding=True
+Sensitivity Type: Accuracy Drop (Baseline Accuracy - Pruned Accuracy)
+Num Layers: 22
+Hidden Dim: 2048
+Group Size (for Phase 2): 128
+FP32 Model Size: 4196.35 MB
+Baseline Accuracy (train): 0.493000 (49.30%)
+Baseline Correct: 986/2000
+Timestamp: 20260327_172359
+GPU: NVIDIA A100-SXM4-40GB
+Num GPUs: 4
+
+================================================================================
+DETAILED TIMING LOG
+================================================================================
+Model Loading Time:              10.46s (10.4622s)
+Baseline Evaluation Time:        1m 56.63s (116.6340s)
+Sensitivity Computation Time:    46m 0.90s (2760.8962s)
+  - Avg per layer:               2m 5.50s (125.4953s)
+  - Min per layer:               1m 58.07s (118.0673s)
+  - Max per layer:               2m 1.03s (121.0259s)
+Total Pipeline Time:             46m 11.36s (2771.3623s)
+
+================================================================================
+PER-LAYER PRUNING SENSITIVITY COMPUTATION TIMES
+================================================================================
+Layer      Time (s)         % of Total    
+----------------------------------------
+layer_0    120.7037         4.37          
+layer_1    120.8124         4.38          
+layer_2    120.3933         4.36          
+layer_3    120.3265         4.36          
+layer_4    120.4007         4.36          
+layer_5    119.8737         4.34          
+layer_6    120.2605         4.36          
+layer_7    121.0259         4.38          
+layer_8    120.3493         4.36          
+layer_9    118.4838         4.29          
+layer_10   120.7192         4.37          
+layer_11   120.3037         4.36          
+layer_12   120.4602         4.36          
+layer_13   120.2417         4.36          
+layer_14   120.5184         4.37          
+layer_15   118.1653         4.28          
+layer_16   119.7420         4.34          
+layer_17   120.2367         4.35          
+layer_18   120.3163         4.36          
+layer_19   120.5216         4.37          
+layer_20   119.3036         4.32          
+layer_21   118.0673         4.28          
+
+================================================================================
+LAYER SENSITIVITIES (PRUNING-BASED -- ACCURACY DROP)
+================================================================================
+Layer      Sensitivity            Rank       Pruned Acc       Baseline Acc    
+--------------------------------------------------------------------------------
+layer_21   0.007500               1          0.485500         0.493000        
+layer_2    0.006000               2          0.487000         0.493000        
+layer_11   0.006000               3          0.487000         0.493000        
+layer_1    0.005500               4          0.487500         0.493000        
+layer_9    0.005500               5          0.487500         0.493000        
+layer_3    0.005000               6          0.488000         0.493000        
+layer_6    0.005000               7          0.488000         0.493000        
+layer_20   0.005000               8          0.488000         0.493000        
+layer_8    0.004500               9          0.488500         0.493000        
+layer_19   0.004500               10         0.488500         0.493000        
+layer_7    0.003500               11         0.489500         0.493000        
+layer_13   0.003000               12         0.490000         0.493000        
+layer_16   0.003000               13         0.490000         0.493000        
+layer_17   0.003000               14         0.490000         0.493000        
+layer_0    0.002500               15         0.490500         0.493000        
+layer_5    0.002500               16         0.490500         0.493000        
+layer_15   0.002000               17         0.491000         0.493000        
+layer_18   0.001500               18         0.491500         0.493000        
+layer_12   0.000500               19         0.492500         0.493000        
+layer_14   0.000500               20         0.492500         0.493000        
+layer_10   0.000000               21         0.493000         0.493000        
+layer_4    -0.001000              22         0.494000         0.493000        
+
+================================================================================
+SENSITIVITY STATISTICS
+================================================================================
+Mean Sensitivity: 0.003432
+Min Sensitivity:  -0.001000
+Max Sensitivity:  0.007500
+Std Deviation:    0.002181
+
+================================================================================
+MACHINE-READABLE METRICS (KEY-VALUE)
+================================================================================
+method: PMPQ
+sensitivity_type: pruning_accuracy_drop
+model_key: TinyLlama-1.1B
+model_name: TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T
+num_layers: 22
+hidden_dim: 2048
+sparsity_level: 0.3
+group_size: 128
+calibration_split: train
+calibration_samples: 2000
+batch_size: 64
+max_length: 2048
+baseline_accuracy: 0.493000
+baseline_correct: 986
+baseline_total: 2000
+baseline_throughput: 17.15
+fp32_model_size_mb: 4196.35
+sensitivity_min: -0.001000
+sensitivity_max: 0.007500
+sensitivity_mean: 0.003432
+sensitivity_std: 0.002181
+device: cuda
+num_gpus: 4
+output_sensitivity_file: Sensitivities/sens_PMPQ_TinyLlama_HellaSwag_20260327_172359.json
+
+# Timing (seconds):
+model_loading_time_s: 10.4622
+baseline_evaluation_time_s: 116.6340
+sensitivity_computation_time_s: 2760.8962
+total_pipeline_time_s: 2771.3623
+avg_per_layer_time_s: 125.4953
+
+# Per-layer times (seconds):
+layer_0_time_s: 120.7037
+layer_1_time_s: 120.8124
+layer_2_time_s: 120.3933
+layer_3_time_s: 120.3265
+layer_4_time_s: 120.4007
+layer_5_time_s: 119.8737
+layer_6_time_s: 120.2605
+layer_7_time_s: 121.0259
+layer_8_time_s: 120.3493
+layer_9_time_s: 118.4838
+layer_10_time_s: 120.7192
+layer_11_time_s: 120.3037
+layer_12_time_s: 120.4602
+layer_13_time_s: 120.2417
+layer_14_time_s: 120.5184
+layer_15_time_s: 118.1653
+layer_16_time_s: 119.7420
+layer_17_time_s: 120.2367
+layer_18_time_s: 120.3163
+layer_19_time_s: 120.5216
+layer_20_time_s: 119.3036
+layer_21_time_s: 118.0673
+
+================================================================================
+LAYER BIT ALLOCATION
+================================================================================
+Note: Bit allocation assigned in Phase 2 based on these scores.
+      Higher sensitivity -> assigned higher bit-width.
+
+  layer_00: sensitivity=0.00250000  pruned_acc=0.490500
+  layer_01: sensitivity=0.00550000  pruned_acc=0.487500
+  layer_02: sensitivity=0.00600000  pruned_acc=0.487000
+  layer_03: sensitivity=0.00500000  pruned_acc=0.488000
+  layer_04: sensitivity=-0.00100000  pruned_acc=0.494000
+  layer_05: sensitivity=0.00250000  pruned_acc=0.490500
+  layer_06: sensitivity=0.00500000  pruned_acc=0.488000
+  layer_07: sensitivity=0.00350000  pruned_acc=0.489500
+  layer_08: sensitivity=0.00450000  pruned_acc=0.488500
+  layer_09: sensitivity=0.00550000  pruned_acc=0.487500
+  layer_10: sensitivity=0.00000000  pruned_acc=0.493000
+  layer_11: sensitivity=0.00600000  pruned_acc=0.487000
+  layer_12: sensitivity=0.00050000  pruned_acc=0.492500
+  layer_13: sensitivity=0.00300000  pruned_acc=0.490000
+  layer_14: sensitivity=0.00050000  pruned_acc=0.492500
+  layer_15: sensitivity=0.00200000  pruned_acc=0.491000
+  layer_16: sensitivity=0.00300000  pruned_acc=0.490000
+  layer_17: sensitivity=0.00300000  pruned_acc=0.490000
+  layer_18: sensitivity=0.00150000  pruned_acc=0.491500
+  layer_19: sensitivity=0.00450000  pruned_acc=0.488500
+  layer_20: sensitivity=0.00500000  pruned_acc=0.488000
+  layer_21: sensitivity=0.00750000  pruned_acc=0.485500
+
+================================================================================
+INTERPRETATION
+================================================================================
+Higher sensitivity = Layer is more affected by weight pruning
+Lower sensitivity  = Layer can tolerate more weight removal
+
+PMPQ Assumption: Layers sensitive to pruning are also
+sensitive to quantization. Use these sensitivities in Phase 2
+to assign different bit-widths for mixed-precision quantization.
+
+================================================================================
+METHOD NOTES
+================================================================================
+Sensitivity Analysis Method: PMPQ
+  PMPQ (Pruning-based Mixed-Precision Quantization) computes
+  layer sensitivity by measuring how much accuracy drops
+  when 30% of the smallest-magnitude weights in that
+  layer alone are set to zero.
+
+  For each layer i:
+    1. Load fresh FP32 model from HuggingFace
+    2. Flatten weights: W_flat = flatten(layer.weight)
+    3. Compute threshold: threshold = quantile(|W_flat|, 0.3)
+    4. Create mask: mask = (|W_flat| > threshold)
+    5. Apply pruning to layer i ONLY: W_pruned = W * mask
+       (all other layers unchanged)
+    6. Evaluate accuracy on HellaSwag TRAIN split
+       (first 2000 samples, 2048-token max length, batch_size=64)
+    7. sensitivity[i] = baseline_accuracy - pruned_accuracy
+
+HellaSwag Accuracy Evaluation:
+  For each example: score 4 candidate endings via avg token
+  log-likelihood given the context. Pick the highest-scoring
+  ending and compare to ground truth label.
+  Metric: Accuracy (fraction of correctly chosen endings).
+
+Calibration Data: HellaSwag TRAIN split
+  First 2000 samples. Fixed for all layers.
+  Used for baseline and all per-layer pruned evaluations.
+  Phase 2 evaluates on HellaSwag VALIDATION split.
+
+Group-Wise Quantization Reference:
+  group_size=128 stored in metadata for Phase 2.

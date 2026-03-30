@@ -1,0 +1,219 @@
+{
+  "timestamp": "20260330_172757",
+  "run_dir": "boolq_fp8_runs/boolq_fp8_20260330_170443",
+  "model_name_or_path": "TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T",
+  "sensitivity_json": "Sensitivities_submodule/submodule_sens_TinyLlama-1.1B-intermediate-step-1431k-3T_BoolQ_train_pruning_s30_n2000_20260330_093732.json",
+  "dataset": "BoolQ",
+  "max_length": 512,
+  "target_family": "mlp_only",
+  "clustering": "percentile",
+  "n_clusters": 2,
+  "max_fp8_modules": 0,
+  "fp8_modules": [
+    "model.layers.0.mlp.down_proj",
+    "model.layers.0.mlp.up_proj",
+    "model.layers.1.mlp.up_proj",
+    "model.layers.10.mlp.gate_proj",
+    "model.layers.10.mlp.up_proj",
+    "model.layers.11.mlp.down_proj",
+    "model.layers.12.mlp.down_proj",
+    "model.layers.12.mlp.gate_proj",
+    "model.layers.12.mlp.up_proj",
+    "model.layers.13.mlp.up_proj",
+    "model.layers.14.mlp.down_proj",
+    "model.layers.14.mlp.gate_proj",
+    "model.layers.15.mlp.down_proj",
+    "model.layers.15.mlp.up_proj",
+    "model.layers.17.mlp.down_proj",
+    "model.layers.17.mlp.gate_proj",
+    "model.layers.17.mlp.up_proj",
+    "model.layers.19.mlp.down_proj",
+    "model.layers.19.mlp.gate_proj",
+    "model.layers.19.mlp.up_proj",
+    "model.layers.2.mlp.down_proj",
+    "model.layers.2.mlp.up_proj",
+    "model.layers.21.mlp.up_proj",
+    "model.layers.3.mlp.down_proj",
+    "model.layers.3.mlp.up_proj",
+    "model.layers.4.mlp.gate_proj",
+    "model.layers.4.mlp.up_proj",
+    "model.layers.6.mlp.down_proj",
+    "model.layers.7.mlp.gate_proj",
+    "model.layers.8.mlp.gate_proj",
+    "model.layers.9.mlp.down_proj",
+    "model.layers.9.mlp.gate_proj"
+  ],
+  "blocklist_names": [
+    "lm_head",
+    "model.norm",
+    "model.embed_tokens",
+    "embed_tokens"
+  ],
+  "layer_precision_map": {
+    "0": "FP8",
+    "1": "FP8",
+    "2": "FP8",
+    "3": "FP8",
+    "4": "FP8",
+    "5": "BF16",
+    "6": "FP8",
+    "7": "FP8",
+    "8": "FP8",
+    "9": "FP8",
+    "10": "FP8",
+    "11": "FP8",
+    "12": "FP8",
+    "13": "FP8",
+    "14": "FP8",
+    "15": "FP8",
+    "16": "BF16",
+    "17": "FP8",
+    "18": "BF16",
+    "19": "FP8",
+    "20": "BF16",
+    "21": "FP8"
+  },
+  "layer_fp8_submodules": {
+    "0": [
+      "mlp.down_proj",
+      "mlp.up_proj"
+    ],
+    "1": [
+      "mlp.up_proj"
+    ],
+    "2": [
+      "mlp.down_proj",
+      "mlp.up_proj"
+    ],
+    "3": [
+      "mlp.down_proj",
+      "mlp.up_proj"
+    ],
+    "4": [
+      "mlp.gate_proj",
+      "mlp.up_proj"
+    ],
+    "5": [],
+    "6": [
+      "mlp.down_proj"
+    ],
+    "7": [
+      "mlp.gate_proj"
+    ],
+    "8": [
+      "mlp.gate_proj"
+    ],
+    "9": [
+      "mlp.down_proj",
+      "mlp.gate_proj"
+    ],
+    "10": [
+      "mlp.gate_proj",
+      "mlp.up_proj"
+    ],
+    "11": [
+      "mlp.down_proj"
+    ],
+    "12": [
+      "mlp.down_proj",
+      "mlp.gate_proj",
+      "mlp.up_proj"
+    ],
+    "13": [
+      "mlp.up_proj"
+    ],
+    "14": [
+      "mlp.down_proj",
+      "mlp.gate_proj"
+    ],
+    "15": [
+      "mlp.down_proj",
+      "mlp.up_proj"
+    ],
+    "16": [],
+    "17": [
+      "mlp.down_proj",
+      "mlp.gate_proj",
+      "mlp.up_proj"
+    ],
+    "18": [],
+    "19": [
+      "mlp.down_proj",
+      "mlp.gate_proj",
+      "mlp.up_proj"
+    ],
+    "20": [],
+    "21": [
+      "mlp.up_proj"
+    ]
+  },
+  "fp8_layers": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    17,
+    19,
+    21
+  ],
+  "bf16_layers": [
+    5,
+    16,
+    18,
+    20
+  ],
+  "dump_stats_path": "boolq_fp8_runs/boolq_fp8_20260330_170443/inc_output/measure",
+  "measure_config_path": "boolq_fp8_runs/boolq_fp8_20260330_170443/fp8_measure.json",
+  "quant_config_path": "boolq_fp8_runs/boolq_fp8_20260330_170443/fp8_quantize.json",
+  "fp8_format": "E4M3",
+  "hp_dtype": "bf16",
+  "baseline_dtype": "fp32",
+  "scale_method": "maxabs_hw_opt_weight",
+  "scale_params": {
+    "input_backoff": 0.25,
+    "weight_backoff": 0.5
+  },
+  "observer": "maxabs",
+  "measure_exclude": "OUTPUT",
+  "scale_format": "scalar",
+  "use_qdq": false,
+  "fake_quant": false,
+  "calib_split": "train",
+  "eval_split": "validation",
+  "calib_samples": 512,
+  "eval_samples": 3270,
+  "batch_size": 64,
+  "acc_baseline": 57.88990825688073,
+  "acc_fp8": 57.18654434250765,
+  "acc_delta": -0.7033639143730781,
+  "acc_delta_pct": -1.2150026413100716,
+  "eval_time_baseline_s": 631.9193003177643,
+  "eval_time_fp8_s": 453.31357622146606,
+  "throughput_baseline_samp_s": 5.174711388551769,
+  "throughput_fp8_samp_s": 7.213549674061479,
+  "calibration_time_s": 55.88664364814758,
+  "size_estimates": {
+    "total_params": 1100048384.0,
+    "fp32_model_size_mb_est": 4196.3515625,
+    "hp_dtype_model_size_mb_est": 2098.17578125,
+    "mixed_model_size_mb_est": 1746.17578125,
+    "fp8_weight_params": 369098752.0,
+    "fp8_bias_params": 0.0,
+    "compression_ratio_fp32_to_mixed_est": 2.4031667416072175
+  },
+  "baseline_state_dict_mb": 4196.3515625,
+  "fp8_state_dict_mb": 1746.17578125,
+  "official_score": 57.83,
+  "warning": "Verify patched modules via LOG_LEVEL_INC=1 output: search for 'Patched modules'."
+}

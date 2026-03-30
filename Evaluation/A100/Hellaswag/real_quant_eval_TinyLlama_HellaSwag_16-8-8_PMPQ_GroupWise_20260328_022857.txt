@@ -1,0 +1,221 @@
+================================================================================
+REAL QUANTIZATION EVALUATION RESULTS (PMPQ + GROUP-WISE)
+TinyLlama on HellaSwag Validation Set
+================================================================================
+
+================================================================================
+CONFIGURATION
+================================================================================
+Quantization Type: REAL (FP16/INT8 -- weights physically stored in low precision)
+  FP16: weights stored as torch.float16  -- 2x real memory savings
+  INT8: weights stored as torch.int8     -- 4x real memory savings
+        + per-group FP16 scale (group-wise symmetric, GPTQ-style)
+  INT8 forward: dequantize int8->fp16 on-the-fly, then fp16 matmul
+  (weight-only quantization -- same mechanism as GPTQ/bitsandbytes)
+  Note: no 4-bit/2-bit -- requires TorchAO/bitsandbytes for sub-INT8
+Model: TinyLlama-1.1B
+Model HF Hub: TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T
+Task: Commonsense Reasoning (HellaSwag -- 4-choice)
+Dataset: HellaSwag
+Evaluation Split: Validation set
+Sensitivity Method: PMPQ
+Sensitivity File: sens_PMPQ_TinyLlama_HellaSwag_20260327_172359.json
+Clustering Strategy: percentile
+Number of Clusters: 3
+Bit Allocation: [16, 8, 8]
+Allocation Name: 16-8-8
+Group Size: 128
+FP16 layers: 7/22
+INT8 layers: 15/22
+Baseline Source: cached (20260328_020703)
+Baseline Cache File: Models/baseline_hellaswag_fp32.json
+Device: cuda
+Num GPUs: 1
+  GPU 0: NVIDIA A100-SXM4-40GB
+Eval Batch Size: 64
+Max Sequence Length: 2048
+Timestamp: 20260328_022857
+Saved Model Folder: Models/real_quant_TinyLlama_HellaSwag_16-8-8_gs128_percentile_PMPQ
+
+================================================================================
+COMPREHENSIVE TIMING LOG
+================================================================================
+Step                                                    Time                 Seconds     
+---------------------------------------------------------------------------------------
+Sensitivity File Loading                                2.39s                2.3885      
+Model Loading                                           2.88s                2.8790      
+Clustering                                              3.57s                3.5681      
+FP32 Baseline Eval [cached (20260328_020703)]           12m 31.21s           751.2100    
+Real Quantization Application (FP16/INT8)               1.14s                1.1433      
+Real-Quantized Model Evaluation                         3m 19.37s            199.3706    
+---------------------------------------------------------------------------------------
+TOTAL PIPELINE TIME                                     3m 39.93s            219.9274    
+
+Phase 1 Sensitivity Computation (from metadata):
+  46m 0.90s  (2760.8962s)
+
+================================================================================
+METRICS BEFORE QUANTIZATION (FP32 Baseline)
+================================================================================
+HellaSwag Accuracy: 0.568612 (56.86%)
+Correct: 5710/10042
+Eval Time: 12m 31.21s
+Throughput: 13.37 examples/s
+Baseline Source: cached (20260328_020703)
+Baseline Cache File: Models/baseline_hellaswag_fp32.json
+
+================================================================================
+METRICS AFTER QUANTIZATION (Group-Wise Real Mixed-Precision PTQ)
+================================================================================
+HellaSwag Accuracy: 0.569209 (56.92%)
+Correct: 5716/10042
+Eval Time: 3m 19.37s
+Throughput: 50.37 examples/s
+
+================================================================================
+PERFORMANCE COMPARISON
+================================================================================
+Accuracy Drop: -0.000597 (-0.11%)
+Quality Assessment: EXCELLENT -- Minimal degradation
+
+================================================================================
+COMPRESSION METRICS
+================================================================================
+Quantization Type: REAL (weights physically stored in low precision)
+  Compression ratio is derived from bit-level arithmetic.
+  Actual GPU footprint is verified via get_model_size_mb().
+FP32 Weight Size (bit-level count)    : 3696.00 MB
+Quant Weight Size (bit-level count)   : 1227.84 MB
+  (INT8 weights + FP16 group scales overhead)
+Actual GPU Footprint (verified real)  : 1728.20 MB
+Compression Ratio: 3.010x
+Size Reduction: 66.78%
+Quantization Time: 1.1433s
+
+================================================================================
+MACHINE-READABLE METRICS (KEY-VALUE)
+================================================================================
+quantization_type: REAL_FP16_INT8
+model_key: TinyLlama-1.1B
+model_name: TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T
+task: HellaSwag
+eval_split: validation
+device: cuda
+num_gpus: 1
+eval_examples: 10042
+sensitivity_method: PMPQ
+clustering_strategy: percentile
+n_clusters: 3
+allocation_name: 16-8-8
+cluster_bits: [16, 8, 8]
+group_size: 128
+fp16_layers: 7
+int8_layers: 15
+baseline_source: cached (20260328_020703)
+acc_before: 0.568612
+correct_before: 5710
+total_before: 10042
+fp32_throughput: 13.37
+acc_after: 0.569209
+correct_after: 5716
+total_after: 10042
+quant_throughput: 50.37
+acc_drop: -0.000597
+acc_drop_pct: -0.11
+fp32_mb_bit_level: 3696.00
+quant_mb_bit_level: 1227.84
+quant_mb_actual_gpu: 1728.20
+compression_ratio: 3.010
+reduction_pct: 66.78
+saved_model_folder: Models/real_quant_TinyLlama_HellaSwag_16-8-8_gs128_percentile_PMPQ
+
+# Timing (seconds):
+sensitivity_file_loading_time_s: 2.3885
+model_loading_time_s: 2.8790
+clustering_time_s: 3.5681
+fp32_evaluation_time_s: 751.2100
+quantization_application_time_s: 1.1433
+quantized_evaluation_time_s: 199.3706
+total_pipeline_time_s: 219.9274
+phase1_sensitivity_time_s: 2760.8962
+
+================================================================================
+LAYER BIT ALLOCATION
+================================================================================
+  layer_00:  8-bit [INT8]  sensitivity: 0.002500
+  layer_01: 16-bit [FP16]  sensitivity: 0.005500
+  layer_02: 16-bit [FP16]  sensitivity: 0.006000
+  layer_03: 16-bit [FP16]  sensitivity: 0.005000
+  layer_04:  8-bit [INT8]  sensitivity: -0.001000
+  layer_05:  8-bit [INT8]  sensitivity: 0.002500
+  layer_06: 16-bit [FP16]  sensitivity: 0.005000
+  layer_07:  8-bit [INT8]  sensitivity: 0.003500
+  layer_08:  8-bit [INT8]  sensitivity: 0.004500
+  layer_09: 16-bit [FP16]  sensitivity: 0.005500
+  layer_10:  8-bit [INT8]  sensitivity: 0.000000
+  layer_11: 16-bit [FP16]  sensitivity: 0.006000
+  layer_12:  8-bit [INT8]  sensitivity: 0.000500
+  layer_13:  8-bit [INT8]  sensitivity: 0.003000
+  layer_14:  8-bit [INT8]  sensitivity: 0.000500
+  layer_15:  8-bit [INT8]  sensitivity: 0.002000
+  layer_16:  8-bit [INT8]  sensitivity: 0.003000
+  layer_17:  8-bit [INT8]  sensitivity: 0.003000
+  layer_18:  8-bit [INT8]  sensitivity: 0.001500
+  layer_19:  8-bit [INT8]  sensitivity: 0.004500
+  layer_20:  8-bit [INT8]  sensitivity: 0.005000
+  layer_21: 16-bit [FP16]  sensitivity: 0.007500
+
+================================================================================
+METHOD NOTES
+================================================================================
+Sensitivity Analysis Method: PMPQ
+  PMPQ (Pruning-based Mixed-Precision Quantization) computes
+  layer sensitivity as the accuracy drop on HellaSwag TRAIN split
+  when a fixed percentage of the smallest-magnitude weights in that
+  layer are set to zero. All other layers remain unchanged.
+  sensitivity[i] = baseline_accuracy - pruned_accuracy.
+  Layers with larger accuracy drops are more sensitive and receive
+  higher bit-widths in mixed-precision quantization.
+  Calibration data: Phase 1 training split of HellaSwag.
+
+Quantization: REAL (weights stored in FP16 or INT8 on GPU)
+  FP16 layers: weight stored as torch.float16.
+               A100 Tensor Cores run FP16 matmul natively.
+  INT8 layers: weight stored as torch.int8 (1 byte per weight).
+               On-the-fly dequantization: int8 * scale -> fp16.
+               Then fp16 matmul on A100 Tensor Cores.
+               This is weight-only quantization, same as GPTQ.
+
+Group-Wise Quantization:
+  group_size=128: every 128 consecutive weights
+  share one FP16 scale factor. Same approach as GPTQ. Provides
+  finer precision than a single global scale per layer.
+
+Dataset: HellaSwag Validation Set
+  4-choice commonsense reasoning benchmark.
+  Evaluation: log-likelihood scoring of 4 candidate endings.
+  Model picks ending with highest avg log-likelihood.
+  Metric: Accuracy (fraction of correctly chosen endings).
+
+Multi-GPU:
+  1 A100 GPU(s) - single GPU mode.
+  Quantization on CPU then model moved to GPU.
+  No DataParallel for optimal performance.
+  Eval batch_size=64 processed on single GPU.
+  autocast(dtype=torch.float16) for Tensor Core acceleration.
+
+Clustering: percentile with 3 groups
+  Cluster 0 (rank 0, bits=16 [FP16]): 7 layers, mean sensitivity=0.0058
+  Cluster 1 (rank 1, bits=8 [INT8]): 7 layers, mean sensitivity=0.0038
+  Cluster 2 (rank 2, bits=8 [INT8]): 8 layers, mean sensitivity=0.0011
+
+Model saved in HuggingFace .bin sharded format:
+  Folder: Models/real_quant_TinyLlama_HellaSwag_16-8-8_gs128_percentile_PMPQ/
+  config.json              -- model architecture & hyperparameters
+  tokenizer.json           -- tokenizer vocabulary & config
+  pytorch_model-*.bin      -- weight shards (500MB each, FP32)
+  pytorch_model.bin.index.json -- maps weight names to shard files
+  quant_config.json        -- quantization configuration
+  Note: .bin files contain FP32 weights (HuggingFace standard).
+  The quant_config.json records original FP16/INT8 assignment
+  per layer so quantization can be exactly reproduced.

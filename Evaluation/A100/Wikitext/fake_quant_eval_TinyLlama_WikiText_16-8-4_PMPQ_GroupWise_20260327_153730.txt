@@ -1,0 +1,200 @@
+================================================================================
+FAKE QUANTIZATION EVALUATION RESULTS (PMPQ + GROUP-WISE)
+TinyLlama on WikiText-2 Test Set
+================================================================================
+
+================================================================================
+CONFIGURATION
+================================================================================
+Quantization Type: FAKE (simulated -- weights remain FP32 throughout)
+  Mechanism: FP32 -> quantize -> dequantize -> store back as FP32
+  Purpose: Measure perplexity impact only. No real memory savings.
+  Bit-widths accepted: any (2, 4, 6, 8, 12, 16, 32)
+Model: TinyLlama-1.1B
+Model HF Hub: TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T
+Task: Language Modeling (WikiText-2 -- Perplexity)
+Dataset: WikiText-2
+Evaluation Split: test (test set -- used in Phase 2)
+Sequence Length: 512
+Sensitivity Method: PMPQ
+Sensitivity File: sens_PMPQ_TinyLlama_20260327_131254.json
+Clustering Strategy: percentile
+Number of Clusters: 3
+Bit Allocation: [16, 8, 4]
+Allocation Name: 16-8-4
+Group Size: 128
+Baseline Source: computed
+Device: cuda
+Num GPUs: 4
+  GPU 0: NVIDIA A100-SXM4-40GB
+  GPU 1: NVIDIA A100-SXM4-40GB
+  GPU 2: NVIDIA A100-SXM4-40GB
+  GPU 3: NVIDIA A100-SXM4-40GB
+Timestamp: 20260327_153730
+Saved Model Folder: Models/fake_quant_TinyLlama_WikiText_16-8-4_gs128_percentile_PMPQ
+
+================================================================================
+COMPREHENSIVE TIMING LOG
+================================================================================
+Step                                                 Time                 Seconds     
+------------------------------------------------------------------------------------
+Sensitivity File Loading                             14.60s               14.6010     
+Model Loading                                        5.53s                5.5304      
+Clustering                                           2.97s                2.9724      
+FP32 Baseline Eval [computed]                        19.88s               19.8812     
+Fake Quantization Application                        0.08s                0.0785      
+Fake-Quantized Model Evaluation                      19.65s               19.6501     
+------------------------------------------------------------------------------------
+TOTAL PIPELINE TIME                                  1m 13.96s            73.9566     
+
+Phase 1 Sensitivity Computation (from metadata):
+  19m 42.34s  (1182.3355s)
+
+================================================================================
+METRICS BEFORE QUANTIZATION (FP32 Baseline)
+================================================================================
+Perplexity: 12.023864
+Samples: 661  |  Total Tokens: 338432
+Eval Time: 19.88s
+Throughput: 17024.35 tokens/s
+Baseline Source: computed
+Baseline Cache File: Models/baseline_wikitext_fp32.json
+
+================================================================================
+METRICS AFTER QUANTIZATION (Group-Wise Fake Mixed-Precision PTQ)
+================================================================================
+Perplexity: 12.263937
+Samples: 661  |  Total Tokens: 338432
+Eval Time: 19.65s
+Throughput: 17224.24 tokens/s
+
+================================================================================
+PERFORMANCE COMPARISON
+================================================================================
+Perplexity Change: +0.240074 (+2.00%)
+Throughput Change: +1.17%
+Quality Assessment: EXCELLENT -- Minimal degradation
+
+================================================================================
+COMPRESSION METRICS
+================================================================================
+Quantization Type: FAKE (no real memory change)
+FP32 Model Size (measured): 4196.35 MB
+Model Size After Fake Quant (measured): 4196.35 MB
+  (identical -- weights remain FP32)
+Simulated Compression Ratio: 3.472x
+  (bit-level calculation only, not real savings)
+Simulated Size Reduction: 71.20%
+Quantization Time: 0.0785s
+
+================================================================================
+MACHINE-READABLE METRICS (KEY-VALUE)
+================================================================================
+quantization_type: FAKE_SIMULATED
+model_key: TinyLlama-1.1B
+model_name: TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T
+task: WikiText2_Language_Modeling
+eval_split: test
+sequence_length: 512
+device: cuda
+num_gpus: 4
+sensitivity_method: PMPQ
+clustering_strategy: percentile
+n_clusters: 3
+allocation_name: 16-8-4
+cluster_bits: [16, 8, 4]
+group_size: 128
+baseline_source: computed
+ppl_before: 12.023864
+total_tokens_before: 338432
+n_samples_before: 661
+throughput_before: 17024.35
+ppl_after: 12.263937
+total_tokens_after: 338432
+n_samples_after: 661
+throughput_after: 17224.24
+ppl_change: 0.240074
+ppl_change_pct: 2.00
+throughput_change_pct: 1.17
+fp32_model_size_mb: 4196.35
+post_fake_quant_size_mb: 4196.35
+simulated_compression_ratio: 3.472
+simulated_reduction_pct: 71.20
+saved_model_folder: Models/fake_quant_TinyLlama_WikiText_16-8-4_gs128_percentile_PMPQ
+
+# Timing (seconds):
+sensitivity_file_loading_time_s: 14.6010
+model_loading_time_s: 5.5304
+clustering_time_s: 2.9724
+fp32_evaluation_time_s: 19.8812
+quantization_application_time_s: 0.0785
+quantized_evaluation_time_s: 19.6501
+total_pipeline_time_s: 73.9566
+phase1_sensitivity_time_s: 1182.3355
+
+================================================================================
+LAYER BIT ALLOCATION
+================================================================================
+  layer_00:  4-bit (simulated)  sensitivity: 0.15590526
+  layer_01:  8-bit (simulated)  sensitivity: 0.67335129
+  layer_02:  8-bit (simulated)  sensitivity: 0.91266209
+  layer_03:  8-bit (simulated)  sensitivity: 0.92069155
+  layer_04:  4-bit (simulated)  sensitivity: 0.62320876
+  layer_05:  4-bit (simulated)  sensitivity: 0.62344331
+  layer_06:  4-bit (simulated)  sensitivity: 0.59725183
+  layer_07: 16-bit (simulated)  sensitivity: 1.19983792
+  layer_08:  8-bit (simulated)  sensitivity: 0.76138967
+  layer_09:  4-bit (simulated)  sensitivity: 0.62772650
+  layer_10:  4-bit (simulated)  sensitivity: 0.57829684
+  layer_11:  4-bit (simulated)  sensitivity: 0.59425563
+  layer_12:  8-bit (simulated)  sensitivity: 0.65698183
+  layer_13:  4-bit (simulated)  sensitivity: 0.54779625
+  layer_14: 16-bit (simulated)  sensitivity: 0.96948111
+  layer_15: 16-bit (simulated)  sensitivity: 1.09902453
+  layer_16: 16-bit (simulated)  sensitivity: 1.41877759
+  layer_17:  8-bit (simulated)  sensitivity: 0.90400857
+  layer_18: 16-bit (simulated)  sensitivity: 1.02798116
+  layer_19:  8-bit (simulated)  sensitivity: 0.96189350
+  layer_20: 16-bit (simulated)  sensitivity: 2.15424323
+  layer_21: 16-bit (simulated)  sensitivity: 7.45986938
+
+================================================================================
+METHOD NOTES
+================================================================================
+Sensitivity Analysis Method: PMPQ
+  PMPQ uses normalized Frobenius norm of weight matrices.
+  sensitivity(layer_i) = mean(||W||_F / sqrt(|W|)) over
+  all Linear modules in layer i.
+  Higher score -> larger weight magnitude -> more sensitive
+  -> needs higher bit-width to preserve accuracy.
+  Lower score  -> smaller magnitude -> less sensitive.
+
+Quantization: FAKE (Simulated)
+  Each weight: FP32 -> round to [16, 8, 4] levels -> dequantize
+  -> stored back as FP32. Captures rounding error numerically
+  but uses no fewer bytes. Standard approach for measuring
+  accuracy impact without hardware deployment.
+
+Group-Wise Quantization:
+  group_size=128: every 128 consecutive weights
+  share one scale factor. Same approach as GPTQ.
+
+Dataset: WikiText-2 Test Set
+  Language modeling benchmark.
+  Metric: Perplexity (lower is better).
+  Additional metric: throughput in tokens/s.
+  Note: Phase 1 calibration used train split.
+        Phase 2 evaluation always uses test split.
+
+Clustering: percentile with 3 groups
+  Cluster 0 (rank 0, bits=16): 7 layers, mean sensitivity=2.189888
+  Cluster 1 (rank 1, bits=8): 7 layers, mean sensitivity=0.827283
+  Cluster 2 (rank 2, bits=4): 8 layers, mean sensitivity=0.543486
+
+Model saved in HuggingFace .bin sharded format:
+  Folder: Models/fake_quant_TinyLlama_WikiText_16-8-4_gs128_percentile_PMPQ/
+  config.json              -- model architecture & hyperparameters
+  tokenizer.json           -- tokenizer vocabulary & config
+  pytorch_model-*.bin      -- weight shards (500MB each, FP32)
+  pytorch_model.bin.index.json -- shard index
+  quant_config.json        -- PMPQ quantization configuration

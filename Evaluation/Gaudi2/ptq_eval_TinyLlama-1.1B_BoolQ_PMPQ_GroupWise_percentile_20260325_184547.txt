@@ -1,0 +1,77 @@
+======================================================================
+MIXED-PRECISION PTQ EVALUATION RESULTS (PMPQ + GROUP-WISE) — BoolQ
+======================================================================
+
+Model: TinyLlama-1.1B
+HuggingFace ID: TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T
+Task: Question Answering (BoolQ, Yes/No)
+Dataset: BoolQ (google/boolq), validation
+Metric: Accuracy (Yes/No log-likelihood)
+Method: PMPQ with Group-Wise Quantization (Simulated/Fake)
+Sensitivity File: sens_TinyLlama-1.1B_BoolQ_n2000_pruning_s30_20260324_233245.json
+Clustering Strategy: percentile
+Number of Clusters: 3
+Bit Allocation: [8, 4, 4]
+Group Size: 128
+Device: Gaudi HPU (1 cards)
+Platform: Intel Gaudi HPU (direct inference, lazy mode, FP32)
+Num Accelerators: 1
+Samples: 3270
+Timestamp: 20260325_184547
+HPU Peak Memory: 73916.4 MB
+
+----------------------------------------------------------------------
+BASELINE (FP32)
+----------------------------------------------------------------------
+Accuracy: 53.6697%
+Official TinyLlama: 57.83%
+Eval Time: 352.02s
+Throughput: 9.29 samples/s
+
+----------------------------------------------------------------------
+QUANTIZED (Mixed-Precision PTQ via PMPQ + Group-Wise)
+----------------------------------------------------------------------
+Accuracy: 47.7982%
+Eval Time: 209.00s
+Throughput: 15.65 samples/s
+Speedup: 1.68x
+
+----------------------------------------------------------------------
+DEGRADATION
+----------------------------------------------------------------------
+Accuracy Drop: +5.8716pp (+10.94%)
+Quality: POOR - Significant degradation
+
+----------------------------------------------------------------------
+COMPRESSION
+----------------------------------------------------------------------
+Original Size: 3696.00 MB
+Quantized Size: 644.44 MB
+Compression Ratio: 5.74x
+Size Reduction: 82.6%
+
+----------------------------------------------------------------------
+LAYER BIT ALLOCATION
+----------------------------------------------------------------------
+Layer  0:  8-bit (sensitivity: 0.2000)
+Layer  1:  4-bit (sensitivity: -1.0500)
+Layer  2:  8-bit (sensitivity: 1.5500)
+Layer  3:  4-bit (sensitivity: -1.0500)
+Layer  4:  4-bit (sensitivity: -1.6500)
+Layer  5:  8-bit (sensitivity: -0.1000)
+Layer  6:  8-bit (sensitivity: 0.1500)
+Layer  7:  4-bit (sensitivity: -0.1500)
+Layer  8:  4-bit (sensitivity: -0.3500)
+Layer  9:  4-bit (sensitivity: -1.2000)
+Layer 10:  4-bit (sensitivity: -0.4500)
+Layer 11:  8-bit (sensitivity: 0.8500)
+Layer 12:  4-bit (sensitivity: -2.1000)
+Layer 13:  4-bit (sensitivity: -1.0500)
+Layer 14:  4-bit (sensitivity: -0.9500)
+Layer 15:  4-bit (sensitivity: -1.6500)
+Layer 16:  4-bit (sensitivity: -1.3500)
+Layer 17:  4-bit (sensitivity: -1.3000)
+Layer 18:  8-bit (sensitivity: 0.5500)
+Layer 19:  4-bit (sensitivity: -2.1500)
+Layer 20:  8-bit (sensitivity: 1.5000)
+Layer 21:  8-bit (sensitivity: 0.8000)

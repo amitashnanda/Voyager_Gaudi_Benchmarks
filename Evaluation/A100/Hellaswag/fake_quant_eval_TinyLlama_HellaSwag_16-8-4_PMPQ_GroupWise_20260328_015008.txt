@@ -1,0 +1,204 @@
+================================================================================
+FAKE QUANTIZATION EVALUATION RESULTS (PMPQ + GROUP-WISE)
+TinyLlama on HellaSwag Validation Set
+================================================================================
+
+================================================================================
+CONFIGURATION
+================================================================================
+Quantization Type: FAKE (simulated -- weights remain FP32 throughout)
+  Mechanism: FP32 -> quantize -> dequantize -> store back as FP32
+  Purpose: Measure accuracy impact only. No real memory savings.
+  Bit-widths accepted: any (2, 4, 6, 8, 12, 16, 32)
+Model: TinyLlama-1.1B
+Model HF Hub: TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T
+Task: Commonsense Reasoning (HellaSwag -- 4-choice)
+Dataset: HellaSwag
+Evaluation Split: Validation set
+Sensitivity Method: PMPQ
+Sensitivity File: sens_PMPQ_TinyLlama_HellaSwag_20260327_172359.json
+Clustering Strategy: percentile
+Number of Clusters: 3
+Bit Allocation: [16, 8, 4]
+Allocation Name: 16-8-4
+Group Size: 128
+Baseline Source: computed
+Device: cuda
+Num GPUs: 4
+  GPU 0: NVIDIA A100-SXM4-40GB
+  GPU 1: NVIDIA A100-SXM4-40GB
+  GPU 2: NVIDIA A100-SXM4-40GB
+  GPU 3: NVIDIA A100-SXM4-40GB
+Eval Batch Size: 64
+Max Sequence Length: 2048
+Timestamp: 20260328_015008
+Saved Model Folder: Models/fake_quant_TinyLlama_HellaSwag_16-8-4_gs128_percentile_PMPQ
+
+================================================================================
+COMPREHENSIVE TIMING LOG
+================================================================================
+Step                                                 Time                 Seconds     
+------------------------------------------------------------------------------------
+Sensitivity File Loading                             1.62s                1.6237      
+Model Loading                                        10.43s               10.4323     
+Clustering                                           2.34s                2.3426      
+FP32 Baseline Eval [computed]                        12m 31.21s           751.2063    
+Fake Quantization Application                        0.12s                0.1158      
+Fake-Quantized Model Evaluation                      12m 28.69s           748.6922    
+------------------------------------------------------------------------------------
+TOTAL PIPELINE TIME                                  25m 20.48s           1520.4828   
+
+Phase 1 Sensitivity Computation (from metadata):
+  46m 0.90s  (2760.8962s)
+
+================================================================================
+METRICS BEFORE QUANTIZATION (FP32 Baseline)
+================================================================================
+HellaSwag Accuracy: 0.568612 (56.86%)
+Correct: 5710/10042
+Eval Time: 12m 31.21s
+Throughput: 13.37 examples/s
+Baseline Source: computed
+Baseline Cache File: Models/baseline_hellaswag_fp32.json
+
+================================================================================
+METRICS AFTER QUANTIZATION (Group-Wise Fake Mixed-Precision PTQ)
+================================================================================
+HellaSwag Accuracy: 0.569707 (56.97%)
+Correct: 5721/10042
+Eval Time: 12m 28.69s
+Throughput: 13.41 examples/s
+
+================================================================================
+PERFORMANCE COMPARISON
+================================================================================
+Accuracy Drop: -0.001095 (-0.19%)
+Quality Assessment: EXCELLENT -- Minimal degradation
+
+================================================================================
+COMPRESSION METRICS
+================================================================================
+Quantization Type: FAKE (simulated -- no real memory savings)
+  Compression ratio is computed from bit-level arithmetic only.
+  Actual model size in memory is identical to FP32 baseline.
+FP32 Weight Size (bit-level count): 3696.00 MB
+Simulated Quantized Size           : 1064.44 MB
+  (includes simulated group-scale overhead)
+Simulated Compression Ratio: 3.472x
+Simulated Size Reduction   : 71.20%
+Quantization Time          : 0.1158s
+
+================================================================================
+MACHINE-READABLE METRICS (KEY-VALUE)
+================================================================================
+quantization_type: FAKE_SIMULATED
+model_key: TinyLlama-1.1B
+model_name: TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T
+task: HellaSwag
+eval_split: validation
+device: cuda
+num_gpus: 4
+eval_examples: 10042
+sensitivity_method: PMPQ
+clustering_strategy: percentile
+n_clusters: 3
+allocation_name: 16-8-4
+cluster_bits: [16, 8, 4]
+group_size: 128
+baseline_source: computed
+acc_before: 0.568612
+correct_before: 5710
+total_before: 10042
+fp32_throughput: 13.37
+acc_after: 0.569707
+correct_after: 5721
+total_after: 10042
+quant_throughput: 13.41
+acc_drop: -0.001095
+acc_drop_pct: -0.19
+fp32_mb_bit_level: 3696.00
+quant_mb_simulated: 1064.44
+compression_ratio: 3.472
+reduction_pct: 71.20
+saved_model_folder: Models/fake_quant_TinyLlama_HellaSwag_16-8-4_gs128_percentile_PMPQ
+
+# Timing (seconds):
+sensitivity_file_loading_time_s: 1.6237
+model_loading_time_s: 10.4323
+clustering_time_s: 2.3426
+fp32_evaluation_time_s: 751.2063
+quantization_application_time_s: 0.1158
+quantized_evaluation_time_s: 748.6922
+total_pipeline_time_s: 1520.4828
+phase1_sensitivity_time_s: 2760.8962
+
+================================================================================
+LAYER BIT ALLOCATION
+================================================================================
+  layer_00:  4-bit (simulated)  sensitivity: 0.002500
+  layer_01: 16-bit (simulated)  sensitivity: 0.005500
+  layer_02: 16-bit (simulated)  sensitivity: 0.006000
+  layer_03: 16-bit (simulated)  sensitivity: 0.005000
+  layer_04:  4-bit (simulated)  sensitivity: -0.001000
+  layer_05:  4-bit (simulated)  sensitivity: 0.002500
+  layer_06: 16-bit (simulated)  sensitivity: 0.005000
+  layer_07:  8-bit (simulated)  sensitivity: 0.003500
+  layer_08:  8-bit (simulated)  sensitivity: 0.004500
+  layer_09: 16-bit (simulated)  sensitivity: 0.005500
+  layer_10:  4-bit (simulated)  sensitivity: 0.000000
+  layer_11: 16-bit (simulated)  sensitivity: 0.006000
+  layer_12:  4-bit (simulated)  sensitivity: 0.000500
+  layer_13:  8-bit (simulated)  sensitivity: 0.003000
+  layer_14:  4-bit (simulated)  sensitivity: 0.000500
+  layer_15:  4-bit (simulated)  sensitivity: 0.002000
+  layer_16:  8-bit (simulated)  sensitivity: 0.003000
+  layer_17:  8-bit (simulated)  sensitivity: 0.003000
+  layer_18:  4-bit (simulated)  sensitivity: 0.001500
+  layer_19:  8-bit (simulated)  sensitivity: 0.004500
+  layer_20:  8-bit (simulated)  sensitivity: 0.005000
+  layer_21: 16-bit (simulated)  sensitivity: 0.007500
+
+================================================================================
+METHOD NOTES
+================================================================================
+Sensitivity Analysis Method: PMPQ
+  PMPQ (Pruning-based Mixed-Precision Quantization) computes
+  layer sensitivity as the accuracy drop on HellaSwag TRAIN split
+  when a fixed percentage of the smallest-magnitude weights in that
+  layer are set to zero. All other layers remain unchanged.
+  sensitivity[i] = baseline_accuracy - pruned_accuracy.
+  Layers with larger accuracy drops are more sensitive and receive
+  higher bit-widths in mixed-precision quantization.
+  Calibration data: Phase 1 training split of HellaSwag.
+
+Quantization: FAKE (Simulated)
+  Each weight: FP32 -> round to [16, 8, 4] levels -> dequantize
+  -> stored back as FP32. Captures rounding error numerically
+  but uses no fewer bytes in memory. Standard approach used by
+  OmniQuant, AffineQuant, and similar papers for measuring accuracy
+  impact without hardware deployment.
+
+Group-Wise Quantization:
+  group_size=128: every 128 consecutive weights
+  share one scale factor. Same approach as GPTQ. Provides finer
+  precision than a single global scale per layer.
+
+Dataset: HellaSwag Validation Set
+  4-choice commonsense reasoning benchmark.
+  Evaluation: log-likelihood scoring of 4 candidate endings.
+  Model picks ending with highest avg log-likelihood.
+  Metric: Accuracy (fraction of correctly chosen endings).
+
+Clustering: percentile with 3 groups
+  Sensitivity scores clustered to assign bit-widths:
+  Cluster 0 (rank 0, bits=16): 7 layers, mean sensitivity=0.0058
+  Cluster 1 (rank 1, bits=8): 7 layers, mean sensitivity=0.0038
+  Cluster 2 (rank 2, bits=4): 8 layers, mean sensitivity=0.0011
+
+Model saved in HuggingFace .bin sharded format:
+  Folder: Models/fake_quant_TinyLlama_HellaSwag_16-8-4_gs128_percentile_PMPQ/
+  config.json              -- model architecture & hyperparameters
+  tokenizer.json           -- tokenizer vocabulary & config
+  pytorch_model-*.bin      -- weight shards (500MB each, FP32)
+  pytorch_model.bin.index.json -- maps weight names to shard files
+  quant_config.json        -- quantization configuration

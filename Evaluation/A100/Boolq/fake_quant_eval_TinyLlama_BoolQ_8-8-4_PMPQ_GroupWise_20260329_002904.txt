@@ -1,0 +1,230 @@
+================================================================================
+FAKE QUANTIZATION EVALUATION RESULTS (PMPQ + GROUP-WISE)
+TinyLlama on BoolQ Validation Set
+================================================================================
+
+================================================================================
+CONFIGURATION
+================================================================================
+Quantization Type: FAKE (simulated -- weights remain FP32 throughout)
+  Mechanism: FP32 -> quantize -> dequantize -> store back as FP32
+  Purpose: Measure accuracy impact only. No real memory savings.
+  Bit-widths accepted: any (2, 4, 6, 8, 12, 16, 32)
+Model: TinyLlama-1.1B
+Model HF Hub: TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T
+Task: Reading Comprehension -- Yes/No (BoolQ -- binary)
+Dataset: BoolQ
+Evaluation Split: Validation set
+Evaluation Metrics: Accuracy, Precision, Recall, F1
+Sensitivity Method: PMPQ
+Sensitivity File: sens_PMPQ_TinyLlama_BoolQ_20260329_000300.json
+Clustering Strategy: percentile
+Number of Clusters: 3
+Bit Allocation: [8, 8, 4]
+Allocation Name: 8-8-4
+Group Size: 128
+Baseline Source: cached (20260329_001337)
+Device: cuda
+Num GPUs: 4
+  GPU 0: NVIDIA A100-SXM4-40GB
+  GPU 1: NVIDIA A100-SXM4-40GB
+  GPU 2: NVIDIA A100-SXM4-40GB
+  GPU 3: NVIDIA A100-SXM4-40GB
+Eval Batch Size: 64
+Max Sequence Length: 512
+Timestamp: 20260329_002904
+Saved Model Folder: Models/fake_quant_TinyLlama_BoolQ_8-8-4_gs128_percentile_PMPQ
+
+================================================================================
+COMPREHENSIVE TIMING LOG
+================================================================================
+Step                                                 Time                 Seconds     
+------------------------------------------------------------------------------------
+Sensitivity File Loading                             1.57s                1.5725      
+Model Loading                                        5.42s                5.4215      
+Clustering                                           2.86s                2.8617      
+FP32 Baseline Eval [cached (20260329_001337)]        6m 50.69s            410.6891    
+Fake Quantization Application                        0.08s                0.0787      
+Fake-Quantized Model Evaluation                      6m 7.83s             367.8258    
+------------------------------------------------------------------------------------
+TOTAL PIPELINE TIME                                  6m 29.31s            389.3132    
+
+Phase 1 Sensitivity Computation (from metadata):
+  31m 46.44s  (1906.4354s)
+
+================================================================================
+METRICS BEFORE QUANTIZATION (FP32 Baseline)
+================================================================================
+BoolQ Accuracy  : 0.580734 (58.07%)
+Precision       : 0.667510
+Recall          : 0.648795
+F1 Score        : 0.658019
+TP / FP / FN / TN: 1319 / 657 / 714 / 580
+Correct         : 1899/3270
+Eval Time       : 6m 50.69s
+Throughput      : 7.96 examples/s
+Baseline Source : cached (20260329_001337)
+Baseline Cache File: Models/baseline_boolq_fp32.json
+
+================================================================================
+METRICS AFTER QUANTIZATION (Group-Wise Fake Mixed-Precision PTQ)
+================================================================================
+BoolQ Accuracy  : 0.539755 (53.98%)
+Precision       : 0.667089
+Recall          : 0.518446
+F1 Score        : 0.583449
+TP / FP / FN / TN: 1054 / 526 / 979 / 711
+Correct         : 1765/3270
+Eval Time       : 6m 7.83s
+Throughput      : 8.89 examples/s
+
+================================================================================
+PERFORMANCE COMPARISON
+================================================================================
+Accuracy Drop : +0.040979 (+7.06%)
+F1 Drop       : +0.074571
+Quality Assessment: FAIR -- Significant degradation
+
+================================================================================
+COMPRESSION METRICS
+================================================================================
+Quantization Type: FAKE (simulated -- no real memory savings)
+  Compression ratio is computed from bit-level arithmetic only.
+  Actual model size in memory is identical to FP32 baseline.
+FP32 Weight Size (bit-level count): 3696.00 MB
+Simulated Quantized Size           : 770.44 MB
+  (includes simulated group-scale overhead)
+Simulated Compression Ratio: 4.797x
+Simulated Size Reduction   : 79.15%
+Quantization Time          : 0.0787s
+
+================================================================================
+MACHINE-READABLE METRICS (KEY-VALUE)
+================================================================================
+quantization_type: FAKE_SIMULATED
+model_key: TinyLlama-1.1B
+model_name: TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T
+task: BoolQ
+eval_split: validation
+device: cuda
+num_gpus: 4
+eval_examples: 3270
+sensitivity_method: PMPQ
+clustering_strategy: percentile
+n_clusters: 3
+allocation_name: 8-8-4
+cluster_bits: [8, 8, 4]
+group_size: 128
+baseline_source: cached (20260329_001337)
+acc_before: 0.580734
+precision_before: 0.667510
+recall_before: 0.648795
+f1_before: 0.658019
+tp_before: 1319
+fp_before: 657
+fn_before: 714
+tn_before: 580
+correct_before: 1899
+total_before: 3270
+fp32_throughput: 7.96
+acc_after: 0.539755
+precision_after: 0.667089
+recall_after: 0.518446
+f1_after: 0.583449
+tp_after: 1054
+fp_after: 526
+fn_after: 979
+tn_after: 711
+correct_after: 1765
+total_after: 3270
+quant_throughput: 8.89
+acc_drop: 0.040979
+acc_drop_pct: 7.06
+f1_drop: 0.074571
+fp32_mb_bit_level: 3696.00
+quant_mb_simulated: 770.44
+compression_ratio: 4.797
+reduction_pct: 79.15
+saved_model_folder: Models/fake_quant_TinyLlama_BoolQ_8-8-4_gs128_percentile_PMPQ
+
+# Timing (seconds):
+sensitivity_file_loading_time_s: 1.5725
+model_loading_time_s: 5.4215
+clustering_time_s: 2.8617
+fp32_evaluation_time_s: 410.6891
+quantization_application_time_s: 0.0787
+quantized_evaluation_time_s: 367.8258
+total_pipeline_time_s: 389.3132
+phase1_sensitivity_time_s: 1906.4354
+
+================================================================================
+LAYER BIT ALLOCATION
+================================================================================
+  layer_00:  4-bit (simulated)  sensitivity: -0.011000
+  layer_01:  8-bit (simulated)  sensitivity: -0.006500
+  layer_02:  8-bit (simulated)  sensitivity: -0.001500
+  layer_03:  4-bit (simulated)  sensitivity: -0.023000
+  layer_04:  4-bit (simulated)  sensitivity: -0.008500
+  layer_05:  8-bit (simulated)  sensitivity: 0.007000
+  layer_06:  8-bit (simulated)  sensitivity: -0.002000
+  layer_07:  8-bit (simulated)  sensitivity: 0.004000
+  layer_08:  8-bit (simulated)  sensitivity: 0.001000
+  layer_09:  4-bit (simulated)  sensitivity: -0.010000
+  layer_10:  8-bit (simulated)  sensitivity: 0.004500
+  layer_11:  8-bit (simulated)  sensitivity: 0.007000
+  layer_12:  4-bit (simulated)  sensitivity: -0.011000
+  layer_13:  4-bit (simulated)  sensitivity: -0.015000
+  layer_14:  8-bit (simulated)  sensitivity: -0.004500
+  layer_15:  8-bit (simulated)  sensitivity: -0.003500
+  layer_16:  8-bit (simulated)  sensitivity: -0.006000
+  layer_17:  4-bit (simulated)  sensitivity: -0.009000
+  layer_18:  8-bit (simulated)  sensitivity: 0.006500
+  layer_19:  4-bit (simulated)  sensitivity: -0.019500
+  layer_20:  8-bit (simulated)  sensitivity: 0.010500
+  layer_21:  8-bit (simulated)  sensitivity: 0.029000
+
+================================================================================
+METHOD NOTES
+================================================================================
+Sensitivity Analysis Method: PMPQ
+  PMPQ (Pruning-based Mixed-Precision Quantization) computes
+  layer sensitivity as the accuracy drop on BoolQ TRAIN split
+  when a fixed percentage of the smallest-magnitude weights in that
+  layer are set to zero. All other layers remain unchanged.
+  sensitivity[i] = baseline_accuracy - pruned_accuracy.
+  Layers with larger accuracy drops are more sensitive and receive
+  higher bit-widths in mixed-precision quantization.
+  Calibration data: Phase 1 training split of BoolQ.
+
+Quantization: FAKE (Simulated)
+  Each weight: FP32 -> round to [8, 8, 4] levels -> dequantize
+  -> stored back as FP32. Captures rounding error numerically
+  but uses no fewer bytes in memory. Standard approach used by
+  OmniQuant, AffineQuant, and similar papers for measuring accuracy
+  impact without hardware deployment.
+
+Group-Wise Quantization:
+  group_size=128: every 128 consecutive weights
+  share one scale factor. Same approach as GPTQ. Provides finer
+  precision than a single global scale per layer.
+
+Dataset: BoolQ Validation Set
+  Binary reading comprehension benchmark (yes/no questions).
+  Evaluation: log-likelihood scoring of 'yes' and 'no' tokens
+  given the passage + question prompt. Model picks the token
+  with the higher log-likelihood.
+  Metrics: Accuracy, Precision, Recall, F1 (positive class = True).
+
+Clustering: percentile with 3 groups
+  Sensitivity scores clustered to assign bit-widths:
+  Cluster 0 (rank 0, bits=8): 7 layers, mean sensitivity=0.0098
+  Cluster 1 (rank 1, bits=8): 7 layers, mean sensitivity=-0.0033
+  Cluster 2 (rank 2, bits=4): 8 layers, mean sensitivity=-0.0134
+
+Model saved in HuggingFace .bin sharded format:
+  Folder: Models/fake_quant_TinyLlama_BoolQ_8-8-4_gs128_percentile_PMPQ/
+  config.json              -- model architecture & hyperparameters
+  tokenizer.json           -- tokenizer vocabulary & config
+  pytorch_model-*.bin      -- weight shards (500MB each, FP32)
+  pytorch_model.bin.index.json -- maps weight names to shard files
+  quant_config.json        -- quantization metadata

@@ -1,0 +1,62 @@
+{
+  "mode": "QUANTIZE",
+  "observer": "maxabs",
+  "dump_stats_path": "boolq_fp8_runs/boolq_fp8_20260330_170443/inc_output/measure",
+  "allowlist": {
+    "types": [],
+    "names": [
+      "model.layers.0.mlp.down_proj",
+      "model.layers.0.mlp.up_proj",
+      "model.layers.1.mlp.up_proj",
+      "model.layers.10.mlp.gate_proj",
+      "model.layers.10.mlp.up_proj",
+      "model.layers.11.mlp.down_proj",
+      "model.layers.12.mlp.down_proj",
+      "model.layers.12.mlp.gate_proj",
+      "model.layers.12.mlp.up_proj",
+      "model.layers.13.mlp.up_proj",
+      "model.layers.14.mlp.down_proj",
+      "model.layers.14.mlp.gate_proj",
+      "model.layers.15.mlp.down_proj",
+      "model.layers.15.mlp.up_proj",
+      "model.layers.17.mlp.down_proj",
+      "model.layers.17.mlp.gate_proj",
+      "model.layers.17.mlp.up_proj",
+      "model.layers.19.mlp.down_proj",
+      "model.layers.19.mlp.gate_proj",
+      "model.layers.19.mlp.up_proj",
+      "model.layers.2.mlp.down_proj",
+      "model.layers.2.mlp.up_proj",
+      "model.layers.21.mlp.up_proj",
+      "model.layers.3.mlp.down_proj",
+      "model.layers.3.mlp.up_proj",
+      "model.layers.4.mlp.gate_proj",
+      "model.layers.4.mlp.up_proj",
+      "model.layers.6.mlp.down_proj",
+      "model.layers.7.mlp.gate_proj",
+      "model.layers.8.mlp.gate_proj",
+      "model.layers.9.mlp.down_proj",
+      "model.layers.9.mlp.gate_proj"
+    ]
+  },
+  "blocklist": {
+    "types": [],
+    "names": [
+      "lm_head",
+      "model.norm",
+      "model.embed_tokens",
+      "embed_tokens"
+    ]
+  },
+  "measure_exclude": "OUTPUT",
+  "fp8_config": "E4M3",
+  "hp_dtype": "bf16",
+  "scale_method": "maxabs_hw_opt_weight",
+  "scale_params": {
+    "input_backoff": 0.25,
+    "weight_backoff": 0.5
+  },
+  "use_qdq": false,
+  "fake_quant": false,
+  "scale_format": "scalar"
+}

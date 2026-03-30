@@ -1,0 +1,100 @@
+================================================================================
+LAYER SENSITIVITY FILE - PRUNING-BASED (PMPQ) ON HELLASWAG
+================================================================================
+
+================================================================================
+CONFIGURATION
+================================================================================
+Model: TinyLlama-1.1B
+Model HF Hub: TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T
+Task: Commonsense Reasoning (HellaSwag, 4-choice)
+Dataset: HellaSwag (Rowan/hellaswag)
+Method: PMPQ (Pruning-based Mixed-Precision Quantization)
+Metric: Accuracy (acc_norm, length-normalized log-likelihood)
+Sparsity Level: 30.0%
+Evaluation Set: VALIDATION (39905 samples)
+Samples Used: 2000
+Num Layers: 22
+Hidden Dim: 2048
+Timestamp: 20260324_065802
+Platform: Intel Gaudi HPU (direct inference, lazy mode, FP32)
+Num Accelerators: 1
+Baseline Accuracy: 49.30%
+Official TinyLlama Score: 59.20 (acc_norm)
+HPU Peak Memory: 14878.8 MB
+
+================================================================================
+COMPUTE DEVICE MAPPING
+================================================================================
+Model inference (forward pass) → HPU (direct, lazy mode)
+Weight pruning (masking)       → CPU
+Dataset loading                → CPU
+Log-likelihood computation     → CPU
+I/O, logging, saving           → CPU
+
+================================================================================
+COMPUTATION STATISTICS
+================================================================================
+Total Time: 1372.75s
+Time per Layer: 62.40s
+
+================================================================================
+LAYER SENSITIVITIES (PRUNING-BASED - ACCURACY DROP %)
+================================================================================
+Layer      Sensitivity          Rank      
+--------------------------------------------------------------------------------
+layer_21   0.7500               1         
+layer_2    0.6000               2         
+layer_11   0.6000               3         
+layer_1    0.5500               4         
+layer_9    0.5500               5         
+layer_3    0.5000               6         
+layer_6    0.5000               7         
+layer_20   0.5000               8         
+layer_8    0.4500               9         
+layer_19   0.4500               10        
+layer_7    0.3500               11        
+layer_13   0.3000               12        
+layer_16   0.3000               13        
+layer_17   0.3000               14        
+layer_0    0.2500               15        
+layer_5    0.2500               16        
+layer_15   0.2000               17        
+layer_18   0.1500               18        
+layer_12   0.0500               19        
+layer_14   0.0500               20        
+layer_10   0.0000               21        
+layer_4    -0.1000              22        
+
+================================================================================
+SENSITIVITY STATISTICS
+================================================================================
+Mean Sensitivity: 0.3432
+Min Sensitivity: -0.1000
+Max Sensitivity: 0.7500
+Std Deviation: 0.2181
+
+================================================================================
+INTERPRETATION
+================================================================================
+Higher sensitivity = Layer is more affected by pruning
+Lower sensitivity = Layer can tolerate more weight removal
+
+Assumption (PMPQ): Layers sensitive to pruning are also
+sensitive to quantization. Use these sensitivities in Phase 2
+to assign different bit-widths for mixed-precision quantization.
+
+================================================================================
+METHOD DETAILS
+================================================================================
+For each layer:
+1. Load fresh model on CPU (patched by optimum-habana)
+2. Apply 30.0% magnitude-based pruning to that layer (CPU)
+3. Move model to HPU, evaluate accuracy on HellaSwag (FP32, lazy mode)
+4. Sensitivity = Baseline_Accuracy - Pruned_Accuracy
+
+HellaSwag Dataset:
+- 4-choice commonsense reasoning task
+- Select most plausible ending for a context
+- Metric: acc_norm (length-normalized log-likelihood)
+- Matches TinyLlama official benchmark evaluation

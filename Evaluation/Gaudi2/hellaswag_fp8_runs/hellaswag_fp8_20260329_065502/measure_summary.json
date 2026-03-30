@@ -1,0 +1,7 @@
+{
+  "timestamp": "20260329_065502",
+  "calib_time_s": 96.97164726257324,
+  "calib_samples": 512,
+  "batch_size": 64,
+  "dump_stats_path": "hellaswag_fp8_runs/hellaswag_fp8_20260329_065502/inc_output/measure"
+}

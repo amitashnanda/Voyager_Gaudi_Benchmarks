@@ -1,0 +1,407 @@
+{
+    "GlobalRank": null,
+    "LocalRank": null,
+    "Mode": "DynamicRange",
+    "Nodes": {
+        "model.layers.0.mlp.gate_proj": {
+            "inputs": [
+                [
+                    [
+                        3.015625
+                    ]
+                ]
+            ],
+            "params": {
+                "weight": [
+                    [
+                        0.494140625
+                    ]
+                ]
+            }
+        },
+        "model.layers.2.mlp.gate_proj": {
+            "inputs": [
+                [
+                    [
+                        1.625
+                    ]
+                ]
+            ],
+            "params": {
+                "weight": [
+                    [
+                        1.1640625
+                    ]
+                ]
+            }
+        },
+        "model.layers.4.mlp.down_proj": {
+            "inputs": [
+                [
+                    [
+                        1.9609375
+                    ]
+                ]
+            ],
+            "params": {
+                "weight": [
+                    [
+                        0.5546875
+                    ]
+                ]
+            }
+        },
+        "model.layers.5.mlp.down_proj": {
+            "inputs": [
+                [
+                    [
+                        2.34375
+                    ]
+                ]
+            ],
+            "params": {
+                "weight": [
+                    [
+                        0.6953125
+                    ]
+                ]
+            }
+        },
+        "model.layers.6.mlp.up_proj": {
+            "inputs": [
+                [
+                    [
+                        4.90625
+                    ]
+                ]
+            ],
+            "params": {
+                "weight": [
+                    [
+                        0.359375
+                    ]
+                ]
+            }
+        },
+        "model.layers.7.mlp.gate_proj": {
+            "inputs": [
+                [
+                    [
+                        5.625
+                    ]
+                ]
+            ],
+            "params": {
+                "weight": [
+                    [
+                        0.376953125
+                    ]
+                ]
+            }
+        },
+        "model.layers.8.mlp.gate_proj": {
+            "inputs": [
+                [
+                    [
+                        4.875
+                    ]
+                ]
+            ],
+            "params": {
+                "weight": [
+                    [
+                        0.53515625
+                    ]
+                ]
+            }
+        },
+        "model.layers.8.mlp.up_proj": {
+            "inputs": [
+                [
+                    [
+                        4.875
+                    ]
+                ]
+            ],
+            "params": {
+                "weight": [
+                    [
+                        0.3515625
+                    ]
+                ]
+            }
+        },
+        "model.layers.10.mlp.gate_proj": {
+            "inputs": [
+                [
+                    [
+                        5.59375
+                    ]
+                ]
+            ],
+            "params": {
+                "weight": [
+                    [
+                        0.482421875
+                    ]
+                ]
+            }
+        },
+        "model.layers.10.mlp.up_proj": {
+            "inputs": [
+                [
+                    [
+                        5.59375
+                    ]
+                ]
+            ],
+            "params": {
+                "weight": [
+                    [
+                        0.279296875
+                    ]
+                ]
+            }
+        },
+        "model.layers.12.mlp.gate_proj": {
+            "inputs": [
+                [
+                    [
+                        6.09375
+                    ]
+                ]
+            ],
+            "params": {
+                "weight": [
+                    [
+                        0.578125
+                    ]
+                ]
+            }
+        },
+        "model.layers.12.mlp.up_proj": {
+            "inputs": [
+                [
+                    [
+                        6.09375
+                    ]
+                ]
+            ],
+            "params": {
+                "weight": [
+                    [
+                        0.302734375
+                    ]
+                ]
+            }
+        },
+        "model.layers.12.mlp.down_proj": {
+            "inputs": [
+                [
+                    [
+                        4.125
+                    ]
+                ]
+            ],
+            "params": {
+                "weight": [
+                    [
+                        0.8046875
+                    ]
+                ]
+            }
+        },
+        "model.layers.13.mlp.up_proj": {
+            "inputs": [
+                [
+                    [
+                        6.1875
+                    ]
+                ]
+            ],
+            "params": {
+                "weight": [
+                    [
+                        0.32421875
+                    ]
+                ]
+            }
+        },
+        "model.layers.13.mlp.down_proj": {
+            "inputs": [
+                [
+                    [
+                        5.8125
+                    ]
+                ]
+            ],
+            "params": {
+                "weight": [
+                    [
+                        0.796875
+                    ]
+                ]
+            }
+        },
+        "model.layers.14.mlp.gate_proj": {
+            "inputs": [
+                [
+                    [
+                        6.28125
+                    ]
+                ]
+            ],
+            "params": {
+                "weight": [
+                    [
+                        0.5703125
+                    ]
+                ]
+            }
+        },
+        "model.layers.14.mlp.up_proj": {
+            "inputs": [
+                [
+                    [
+                        6.28125
+                    ]
+                ]
+            ],
+            "params": {
+                "weight": [
+                    [
+                        0.380859375
+                    ]
+                ]
+            }
+        },
+        "model.layers.14.mlp.down_proj": {
+            "inputs": [
+                [
+                    [
+                        9.4375
+                    ]
+                ]
+            ],
+            "params": {
+                "weight": [
+                    [
+                        0.64453125
+                    ]
+                ]
+            }
+        },
+        "model.layers.15.mlp.gate_proj": {
+            "inputs": [
+                [
+                    [
+                        6.71875
+                    ]
+                ]
+            ],
+            "params": {
+                "weight": [
+                    [
+                        0.435546875
+                    ]
+                ]
+            }
+        },
+        "model.layers.16.mlp.up_proj": {
+            "inputs": [
+                [
+                    [
+                        7.03125
+                    ]
+                ]
+            ],
+            "params": {
+                "weight": [
+                    [
+                        0.46484375
+                    ]
+                ]
+            }
+        },
+        "model.layers.18.mlp.gate_proj": {
+            "inputs": [
+                [
+                    [
+                        7.09375
+                    ]
+                ]
+            ],
+            "params": {
+                "weight": [
+                    [
+                        0.330078125
+                    ]
+                ]
+            }
+        },
+        "model.layers.18.mlp.down_proj": {
+            "inputs": [
+                [
+                    [
+                        17.5
+                    ]
+                ]
+            ],
+            "params": {
+                "weight": [
+                    [
+                        0.62890625
+                    ]
+                ]
+            }
+        },
+        "model.layers.19.mlp.gate_proj": {
+            "inputs": [
+                [
+                    [
+                        7.34375
+                    ]
+                ]
+            ],
+            "params": {
+                "weight": [
+                    [
+                        0.4375
+                    ]
+                ]
+            }
+        },
+        "model.layers.20.mlp.up_proj": {
+            "inputs": [
+                [
+                    [
+                        9.0
+                    ]
+                ]
+            ],
+            "params": {
+                "weight": [
+                    [
+                        0.2255859375
+                    ]
+                ]
+            }
+        },
+        "model.layers.20.mlp.down_proj": {
+            "inputs": [
+                [
+                    [
+                        19.25
+                    ]
+                ]
+            ],
+            "params": {
+                "weight": [
+                    [
+                        0.71875
+                    ]
+                ]
+            }
+        }
+    }
+}

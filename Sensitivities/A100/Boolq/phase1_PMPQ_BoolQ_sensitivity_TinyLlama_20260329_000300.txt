@@ -1,0 +1,235 @@
+================================================================================
+LAYER SENSITIVITY FILE - PRUNING-BASED (PMPQ) ON BOOLQ
+================================================================================
+
+================================================================================
+CONFIGURATION
+================================================================================
+Model: TinyLlama-1.1B
+Model HF Hub: TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T
+Task: Boolean Question Answering (BoolQ -- binary yes/no)
+Dataset: BoolQ
+Method: PMPQ (Pruning-based Mixed-Precision Quantization)
+Sparsity Level: 30%
+Calibration Split: train (first 2000 samples)
+Batch Size: 64
+Tokenization: Max length 512 tokens, padding=True
+Sensitivity Type: Accuracy Drop (Baseline Accuracy - Pruned Accuracy)
+Num Layers: 22
+Hidden Dim: 2048
+Group Size (for Phase 2): 128
+FP32 Model Size: 4196.35 MB
+Baseline Accuracy (train): 0.612500 (61.25%)
+Baseline Correct: 1225/2000
+Timestamp: 20260329_000300
+GPU: NVIDIA A100-SXM4-40GB
+Num GPUs: 4
+
+================================================================================
+DETAILED TIMING LOG
+================================================================================
+Model Loading Time:              10.14s (10.1388s)
+Baseline Evaluation Time:        1m 17.95s (77.9458s)
+Sensitivity Computation Time:    31m 46.44s (1906.4354s)
+  - Avg per layer:               1m 26.66s (86.6562s)
+  - Min per layer:               1m 20.74s (80.7377s)
+  - Max per layer:               1m 25.11s (85.1114s)
+Total Pipeline Time:             31m 56.58s (1916.5779s)
+
+================================================================================
+PER-LAYER PRUNING SENSITIVITY COMPUTATION TIMES
+================================================================================
+Layer      Time (s)         % of Total    
+----------------------------------------
+layer_0    84.3942          4.43          
+layer_1    83.9783          4.40          
+layer_2    84.9520          4.46          
+layer_3    80.8615          4.24          
+layer_4    84.9182          4.45          
+layer_5    80.9309          4.25          
+layer_6    84.9715          4.46          
+layer_7    80.7407          4.24          
+layer_8    84.9905          4.46          
+layer_9    80.7605          4.24          
+layer_10   84.5593          4.44          
+layer_11   80.8993          4.24          
+layer_12   84.8840          4.45          
+layer_13   80.7862          4.24          
+layer_14   84.6963          4.44          
+layer_15   80.8200          4.24          
+layer_16   85.0199          4.46          
+layer_17   80.7377          4.24          
+layer_18   84.9408          4.46          
+layer_19   80.7541          4.24          
+layer_20   85.1114          4.46          
+layer_21   81.1374          4.26          
+
+================================================================================
+LAYER SENSITIVITIES (PRUNING-BASED -- ACCURACY DROP)
+================================================================================
+Layer      Sensitivity            Rank       Pruned Acc       Baseline Acc    
+--------------------------------------------------------------------------------
+layer_21   0.029000               1          0.583500         0.612500        
+layer_20   0.010500               2          0.602000         0.612500        
+layer_5    0.007000               3          0.605500         0.612500        
+layer_11   0.007000               4          0.605500         0.612500        
+layer_18   0.006500               5          0.606000         0.612500        
+layer_10   0.004500               6          0.608000         0.612500        
+layer_7    0.004000               7          0.608500         0.612500        
+layer_8    0.001000               8          0.611500         0.612500        
+layer_2    -0.001500              9          0.614000         0.612500        
+layer_6    -0.002000              10         0.614500         0.612500        
+layer_15   -0.003500              11         0.616000         0.612500        
+layer_14   -0.004500              12         0.617000         0.612500        
+layer_16   -0.006000              13         0.618500         0.612500        
+layer_1    -0.006500              14         0.619000         0.612500        
+layer_4    -0.008500              15         0.621000         0.612500        
+layer_17   -0.009000              16         0.621500         0.612500        
+layer_9    -0.010000              17         0.622500         0.612500        
+layer_0    -0.011000              18         0.623500         0.612500        
+layer_12   -0.011000              19         0.623500         0.612500        
+layer_13   -0.015000              20         0.627500         0.612500        
+layer_19   -0.019500              21         0.632000         0.612500        
+layer_3    -0.023000              22         0.635500         0.612500        
+
+================================================================================
+SENSITIVITY STATISTICS
+================================================================================
+Mean Sensitivity: -0.002795
+Min Sensitivity:  -0.023000
+Max Sensitivity:  0.029000
+Std Deviation:    0.011085
+
+================================================================================
+MACHINE-READABLE METRICS (KEY-VALUE)
+================================================================================
+method: PMPQ
+sensitivity_type: pruning_accuracy_drop
+model_key: TinyLlama-1.1B
+model_name: TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T
+num_layers: 22
+hidden_dim: 2048
+sparsity_level: 0.3
+group_size: 128
+calibration_split: train
+calibration_samples: 2000
+batch_size: 64
+max_length: 512
+baseline_accuracy: 0.612500
+baseline_correct: 1225
+baseline_total: 2000
+baseline_throughput: 25.66
+fp32_model_size_mb: 4196.35
+sensitivity_min: -0.023000
+sensitivity_max: 0.029000
+sensitivity_mean: -0.002795
+sensitivity_std: 0.011085
+device: cuda
+num_gpus: 4
+output_sensitivity_file: Sensitivities/sens_PMPQ_TinyLlama_BoolQ_20260329_000300.json
+
+# Timing (seconds):
+model_loading_time_s: 10.1388
+baseline_evaluation_time_s: 77.9458
+sensitivity_computation_time_s: 1906.4354
+total_pipeline_time_s: 1916.5779
+avg_per_layer_time_s: 86.6562
+
+# Per-layer times (seconds):
+layer_0_time_s: 84.3942
+layer_1_time_s: 83.9783
+layer_2_time_s: 84.9520
+layer_3_time_s: 80.8615
+layer_4_time_s: 84.9182
+layer_5_time_s: 80.9309
+layer_6_time_s: 84.9715
+layer_7_time_s: 80.7407
+layer_8_time_s: 84.9905
+layer_9_time_s: 80.7605
+layer_10_time_s: 84.5593
+layer_11_time_s: 80.8993
+layer_12_time_s: 84.8840
+layer_13_time_s: 80.7862
+layer_14_time_s: 84.6963
+layer_15_time_s: 80.8200
+layer_16_time_s: 85.0199
+layer_17_time_s: 80.7377
+layer_18_time_s: 84.9408
+layer_19_time_s: 80.7541
+layer_20_time_s: 85.1114
+layer_21_time_s: 81.1374
+
+================================================================================
+LAYER BIT ALLOCATION
+================================================================================
+Note: Bit allocation assigned in Phase 2 based on these scores.
+      Higher sensitivity -> assigned higher bit-width.
+
+  layer_00: sensitivity=-0.01100000  pruned_acc=0.623500
+  layer_01: sensitivity=-0.00650000  pruned_acc=0.619000
+  layer_02: sensitivity=-0.00150000  pruned_acc=0.614000
+  layer_03: sensitivity=-0.02300000  pruned_acc=0.635500
+  layer_04: sensitivity=-0.00850000  pruned_acc=0.621000
+  layer_05: sensitivity=0.00700000  pruned_acc=0.605500
+  layer_06: sensitivity=-0.00200000  pruned_acc=0.614500
+  layer_07: sensitivity=0.00400000  pruned_acc=0.608500
+  layer_08: sensitivity=0.00100000  pruned_acc=0.611500
+  layer_09: sensitivity=-0.01000000  pruned_acc=0.622500
+  layer_10: sensitivity=0.00450000  pruned_acc=0.608000
+  layer_11: sensitivity=0.00700000  pruned_acc=0.605500
+  layer_12: sensitivity=-0.01100000  pruned_acc=0.623500
+  layer_13: sensitivity=-0.01500000  pruned_acc=0.627500
+  layer_14: sensitivity=-0.00450000  pruned_acc=0.617000
+  layer_15: sensitivity=-0.00350000  pruned_acc=0.616000
+  layer_16: sensitivity=-0.00600000  pruned_acc=0.618500
+  layer_17: sensitivity=-0.00900000  pruned_acc=0.621500
+  layer_18: sensitivity=0.00650000  pruned_acc=0.606000
+  layer_19: sensitivity=-0.01950000  pruned_acc=0.632000
+  layer_20: sensitivity=0.01050000  pruned_acc=0.602000
+  layer_21: sensitivity=0.02900000  pruned_acc=0.583500
+
+================================================================================
+INTERPRETATION
+================================================================================
+Higher sensitivity = Layer is more affected by weight pruning
+Lower sensitivity  = Layer can tolerate more weight removal
+
+PMPQ Assumption: Layers sensitive to pruning are also
+sensitive to quantization. Use these sensitivities in Phase 2
+to assign different bit-widths for mixed-precision quantization.
+
+================================================================================
+METHOD NOTES
+================================================================================
+Sensitivity Analysis Method: PMPQ
+  PMPQ (Pruning-based Mixed-Precision Quantization) computes
+  layer sensitivity by measuring how much accuracy drops
+  when 30% of the smallest-magnitude weights in that
+  layer alone are set to zero.
+
+  For each layer i:
+    1. Load fresh FP32 model from HuggingFace
+    2. Flatten weights: W_flat = flatten(layer.weight)
+    3. Compute threshold: threshold = quantile(|W_flat|, 0.3)
+    4. Create mask: mask = (|W_flat| > threshold)
+    5. Apply pruning to layer i ONLY: W_pruned = W * mask
+       (all other layers unchanged)
+    6. Evaluate accuracy on BoolQ TRAIN split
+       (first 2000 samples, 512-token max length, batch_size=64)
+    7. sensitivity[i] = baseline_accuracy - pruned_accuracy
+
+BoolQ Accuracy Evaluation:
+  For each example: build prompt as
+  "Passage: {passage}\nQuestion: {question}\nAnswer:"
+  Score "yes" and "no" continuations via avg token log-likelihood
+  given the prompt. Pick the higher-scoring answer and compare
+  to ground truth label (True=yes, False=no).
+  Metric: Accuracy (fraction of correctly answered questions).
+
+Calibration Data: BoolQ TRAIN split
+  First 2000 samples. Fixed for all layers.
+  Used for baseline and all per-layer pruned evaluations.
+  Phase 2 evaluates on BoolQ VALIDATION split.
+
+Group-Wise Quantization Reference:
+  group_size=128 stored in metadata for Phase 2.

@@ -1,0 +1,8 @@
+{
+  "timestamp": "20260326_033826",
+  "calib_time_s": 0.9439001083374023,
+  "calib_samples": 512,
+  "block_size": 512,
+  "per_device_eval_batch_size": 32,
+  "dump_stats_path": "fp8_runs/fp8_20260326_033826/inc_output/measure"
+}

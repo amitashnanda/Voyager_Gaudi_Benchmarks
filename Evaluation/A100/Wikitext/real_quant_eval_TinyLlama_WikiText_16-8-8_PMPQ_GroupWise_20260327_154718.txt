@@ -1,0 +1,215 @@
+================================================================================
+REAL QUANTIZATION EVALUATION RESULTS (PMPQ + GROUP-WISE)
+TinyLlama on WikiText-2 Test Set
+================================================================================
+
+================================================================================
+CONFIGURATION
+================================================================================
+Quantization Type: REAL (FP16/INT8 -- weights physically stored in low precision)
+  FP16: weights stored as torch.float16  -- 2x real memory savings
+  INT8: weights stored as torch.int8     -- 4x real memory savings
+        INT8 is storage only. On each forward pass:
+        int8 weights dequantized to FP16, then FP16 matmul
+        on A100 Tensor Cores. (weight-only quantization)
+        Per-group FP16 scale: group_size=128 weights -> 1 scale
+  No 4-bit/2-bit -- requires TorchAO/bitsandbytes for sub-INT8
+Model: TinyLlama-1.1B
+Model HF Hub: TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T
+Task: Language Modeling (WikiText-2 -- Perplexity)
+Dataset: WikiText-2
+Evaluation Split: test (test set -- used in Phase 2)
+Sequence Length: 512
+Sensitivity Method: PMPQ
+Sensitivity File: sens_PMPQ_TinyLlama_20260327_131254.json
+Clustering Strategy: kmeans
+Number of Clusters: 3
+Bit Allocation: [16, 8, 8]
+Allocation Name: 16-8-8
+Group Size: 128
+FP16 layers: 1/22
+INT8 layers: 21/22
+Baseline Source: computed
+Baseline Cache File: Models/baseline_wikitext_fp32.json
+Device: cuda
+Num GPUs: 4
+  GPU 0: NVIDIA A100-SXM4-40GB
+  GPU 1: NVIDIA A100-SXM4-40GB
+  GPU 2: NVIDIA A100-SXM4-40GB
+  GPU 3: NVIDIA A100-SXM4-40GB
+Timestamp: 20260327_154718
+Saved Model Folder: Models/real_quant_TinyLlama_WikiText_16-8-8_gs128_kmeans_PMPQ
+
+================================================================================
+COMPREHENSIVE TIMING LOG
+================================================================================
+Step                                                    Time                 Seconds     
+---------------------------------------------------------------------------------------
+Sensitivity File Loading                                3.27s                3.2692      
+Model Loading                                           2.75s                2.7517      
+Clustering                                              5.21s                5.2111      
+FP32 Baseline Eval [computed]                           19.82s               19.8225     
+Real Quantization Application (FP16/INT8)               1.37s                1.3722      
+Real-Quantized Model Evaluation                         24.98s               24.9840     
+---------------------------------------------------------------------------------------
+TOTAL PIPELINE TIME                                     1m 11.52s            71.5151     
+
+Phase 1 Sensitivity Computation (from metadata):
+  19m 42.34s  (1182.3355s)
+
+================================================================================
+METRICS BEFORE QUANTIZATION (FP32 Baseline)
+================================================================================
+Perplexity: 12.023864
+Samples: 661  |  Total Tokens: 338432
+Eval Time: 19.82s
+Throughput: 17074.78 tokens/s
+Baseline Source: computed
+Baseline Cache File: Models/baseline_wikitext_fp32.json
+
+================================================================================
+METRICS AFTER QUANTIZATION (Group-Wise Real Mixed-Precision PTQ)
+================================================================================
+Perplexity: 12.024965
+Samples: 661  |  Total Tokens: 338432
+Eval Time: 24.98s
+Throughput: 13546.87 tokens/s
+
+================================================================================
+PERFORMANCE COMPARISON
+================================================================================
+Perplexity Change: +0.001101 (+0.01%)
+Throughput Change: -20.66%
+Quality Assessment: EXCELLENT -- Minimal degradation
+
+================================================================================
+COMPRESSION METRICS
+================================================================================
+Quantization Type: REAL (weights physically stored in low precision)
+FP32 Model Size (measured before quantization): 4196.35 MB
+Quantized Model Size (measured after quantization): 1480.13 MB
+  (FP16 weights for FP16 layers + INT8 weights + FP16 group scales)
+Compression Ratio: 3.772x
+Size Reduction: 73.49%
+Quantization Time: 1.3722s
+
+================================================================================
+MACHINE-READABLE METRICS (KEY-VALUE)
+================================================================================
+quantization_type: REAL_FP16_INT8
+model_key: TinyLlama-1.1B
+model_name: TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T
+task: WikiText2_Language_Modeling
+eval_split: test
+sequence_length: 512
+device: cuda
+num_gpus: 4
+sensitivity_method: PMPQ
+clustering_strategy: kmeans
+n_clusters: 3
+allocation_name: 16-8-8
+cluster_bits: [16, 8, 8]
+group_size: 128
+fp16_layers: 1
+int8_layers: 21
+baseline_source: computed
+ppl_before: 12.023864
+total_tokens_before: 338432
+n_samples_before: 661
+throughput_before: 17074.78
+ppl_after: 12.024965
+total_tokens_after: 338432
+n_samples_after: 661
+throughput_after: 13546.87
+ppl_change: 0.001101
+ppl_change_pct: 0.01
+throughput_change_pct: -20.66
+fp32_model_size_mb: 4196.35
+quant_model_size_mb: 1480.13
+compression_ratio: 3.772
+reduction_pct: 73.49
+saved_model_folder: Models/real_quant_TinyLlama_WikiText_16-8-8_gs128_kmeans_PMPQ
+
+# Timing (seconds):
+sensitivity_file_loading_time_s: 3.2692
+model_loading_time_s: 2.7517
+clustering_time_s: 5.2111
+fp32_evaluation_time_s: 19.8225
+quantization_application_time_s: 1.3722
+quantized_evaluation_time_s: 24.9840
+total_pipeline_time_s: 71.5151
+phase1_sensitivity_time_s: 1182.3355
+
+================================================================================
+LAYER BIT ALLOCATION
+================================================================================
+  layer_00:  8-bit [INT8]  sensitivity: 0.15590526
+  layer_01:  8-bit [INT8]  sensitivity: 0.67335129
+  layer_02:  8-bit [INT8]  sensitivity: 0.91266209
+  layer_03:  8-bit [INT8]  sensitivity: 0.92069155
+  layer_04:  8-bit [INT8]  sensitivity: 0.62320876
+  layer_05:  8-bit [INT8]  sensitivity: 0.62344331
+  layer_06:  8-bit [INT8]  sensitivity: 0.59725183
+  layer_07:  8-bit [INT8]  sensitivity: 1.19983792
+  layer_08:  8-bit [INT8]  sensitivity: 0.76138967
+  layer_09:  8-bit [INT8]  sensitivity: 0.62772650
+  layer_10:  8-bit [INT8]  sensitivity: 0.57829684
+  layer_11:  8-bit [INT8]  sensitivity: 0.59425563
+  layer_12:  8-bit [INT8]  sensitivity: 0.65698183
+  layer_13:  8-bit [INT8]  sensitivity: 0.54779625
+  layer_14:  8-bit [INT8]  sensitivity: 0.96948111
+  layer_15:  8-bit [INT8]  sensitivity: 1.09902453
+  layer_16:  8-bit [INT8]  sensitivity: 1.41877759
+  layer_17:  8-bit [INT8]  sensitivity: 0.90400857
+  layer_18:  8-bit [INT8]  sensitivity: 1.02798116
+  layer_19:  8-bit [INT8]  sensitivity: 0.96189350
+  layer_20:  8-bit [INT8]  sensitivity: 2.15424323
+  layer_21: 16-bit [FP16]  sensitivity: 7.45986938
+
+================================================================================
+METHOD NOTES
+================================================================================
+Sensitivity Analysis Method: PMPQ
+  PMPQ uses normalized Frobenius norm of weight matrices.
+  sensitivity(layer_i) = mean(||W||_F / sqrt(|W|)) over
+  all Linear modules in layer i.
+  Higher score -> larger weight magnitude -> more sensitive
+  -> needs higher bit-width (FP16) to preserve perplexity.
+  Lower score  -> smaller magnitude -> can use INT8.
+
+Quantization: REAL (weights stored in FP16 or INT8 on GPU)
+  FP16 layers: weight stored as torch.float16.
+               A100 Tensor Cores run FP16 matmul natively.
+  INT8 layers: weight stored as torch.int8 (1 byte per weight).
+               On each forward pass: int8 weights dequantized
+               to FP16 using per-group scale, then FP16 matmul.
+               This is weight-only quantization (same as GPTQ).
+               INT8 is purely a storage format -- computation
+               runs in FP16 on A100 Tensor Cores.
+
+Group-Wise Quantization:
+  group_size=128: every 128 consecutive weights
+  share one FP16 scale factor. Same approach as GPTQ.
+
+Dataset: WikiText-2 Test Set
+  Language modeling benchmark.
+  Metric: Perplexity (lower is better).
+  Additional metric: throughput in tokens/s.
+  Note: Phase 1 calibration used train split (512 tokens).
+        Phase 2 evaluation always uses test split.
+
+Clustering: kmeans with 3 groups
+  Cluster 1 (rank 0, bits=16 [FP16]): 1 layers, mean sensitivity=7.459869
+  Cluster 2 (rank 1, bits=8 [INT8]): 2 layers, mean sensitivity=1.786510
+  Cluster 0 (rank 2, bits=8 [INT8]): 19 layers, mean sensitivity=0.759747
+
+Model saved in HuggingFace .bin sharded format:
+  Folder: Models/real_quant_TinyLlama_WikiText_16-8-8_gs128_kmeans_PMPQ/
+  config.json              -- model architecture & hyperparameters
+  tokenizer.json           -- tokenizer vocabulary & config
+  pytorch_model-*.bin      -- weight shards (500MB each, FP32)
+  pytorch_model.bin.index.json -- shard index
+  quant_config.json        -- PMPQ quantization configuration
+  Note: .bin files contain FP32 weights (HuggingFace standard).
+  quant_config.json records FP16/INT8 layer assignment so
+  quantization can be exactly reproduced.

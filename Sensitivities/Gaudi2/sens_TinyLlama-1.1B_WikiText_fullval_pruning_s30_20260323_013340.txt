@@ -1,0 +1,97 @@
+================================================================================
+LAYER SENSITIVITY FILE - PRUNING-BASED (PMPQ) ON WIKITEXT
+================================================================================
+
+================================================================================
+CONFIGURATION
+================================================================================
+Model: TinyLlama-1.1B
+Model HF Hub: TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T
+Task: Language Modeling (Perplexity)
+Dataset: WikiText-2
+Method: PMPQ (Pruning-based Mixed-Precision Quantization)
+Sparsity Level: 30.0%
+Evaluation Set: VALIDATION (full, continuous text)
+Tokenization: Continuous text, 512-token chunks, no padding
+Num Layers: 22
+Hidden Dim: 2048
+Timestamp: 20260323_013340
+Platform: Intel Gaudi HPU (optimum-habana)
+Num Accelerators: 1
+Baseline PPL: 12.24
+HPU Peak Memory: 16978.9 MB
+
+================================================================================
+COMPUTE DEVICE MAPPING
+================================================================================
+Model inference (forward/loss) → HPU (via GaudiTrainer)
+Weight pruning (masking)       → CPU
+Dataset tokenization           → CPU
+I/O, logging, saving           → CPU
+
+================================================================================
+COMPUTATION STATISTICS
+================================================================================
+Total Time: 413.46s
+Time per Layer: 18.79s
+
+================================================================================
+LAYER SENSITIVITIES (PRUNING-BASED - PERPLEXITY INCREASE)
+================================================================================
+Layer      Sensitivity          Rank      
+--------------------------------------------------------------------------------
+layer_2    0.2278               1         
+layer_21   0.1239               2         
+layer_1    0.1053               3         
+layer_9    0.0766               4         
+layer_16   0.0679               5         
+layer_8    0.0664               6         
+layer_19   0.0647               7         
+layer_11   0.0602               8         
+layer_6    0.0538               9         
+layer_18   0.0517               10        
+layer_3    0.0516               11        
+layer_12   0.0482               12        
+layer_17   0.0384               13        
+layer_20   0.0363               14        
+layer_13   0.0356               15        
+layer_4    0.0355               16        
+layer_14   0.0350               17        
+layer_10   0.0313               18        
+layer_0    0.0187               19        
+layer_15   0.0036               20        
+layer_5    0.0035               21        
+layer_7    -0.1983              22        
+
+================================================================================
+SENSITIVITY STATISTICS
+================================================================================
+Mean Sensitivity: 0.0472
+Min Sensitivity: -0.1983
+Max Sensitivity: 0.2278
+Std Deviation: 0.0707
+
+================================================================================
+INTERPRETATION
+================================================================================
+Higher sensitivity = Layer is more affected by pruning
+Lower sensitivity = Layer can tolerate more weight removal
+
+Assumption (PMPQ): Layers sensitive to pruning are also
+sensitive to quantization. Use these sensitivities in Phase 2
+to assign different bit-widths for mixed-precision quantization.
+
+================================================================================
+METHOD DETAILS
+================================================================================
+For each layer:
+1. Load fresh model on CPU (patched by optimum-habana)
+2. Apply 30.0% magnitude-based pruning to that layer (CPU)
+3. Evaluate perplexity with GaudiTrainer on HPU (lazy mode + FP32)
+4. Use continuous text tokenization (512-token chunks, no padding)
+5. Sensitivity = Pruned_Perplexity - Baseline_Perplexity
+
+WikiText-2 Dataset:
+- Language modeling dataset from Wikipedia articles
+- Evaluation metric: Perplexity (lower is better)
+- Continuous tokenization matches Phase 2 evaluation

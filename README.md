@@ -2,16 +2,21 @@
 
 ## Overview
 
-This repository implements a comprehensive Perfomance optimization and Comparative Analysis of Generative AI models on Advanced AI Accelerators (Intel Gaudi1, Gaudi2, Gaudi3, Nvidia V100, Nvidia A100, Nvidia H100).
+This repository implements a comprehensive Perfomance optimization and Comparative Analysis of Generative AI models on Advanced AI Accelerators (Intel Gaudi1, Gaudi2, Gaudi3, Nvidia V100, Nvidia A100, Nvidia H100).In this section we provide the tools to reproduce the results shown on the PEARC26 paper.
 
-### Key Features
+### Mixed-Precision Quantization
 - **Multi-Platform Support**: Optimized implementations for Gaudi 2 (FP8/BF16) and A100 (INT8/FP16)
 - **Three Evaluation Tasks**: WikiText-2 (perplexity), HellaSwag (reasoning), BoolQ (QA)
 - **Two-Phase Approach**: Sensitivity analysis → Mixed-precision quantization
 - **Real & Fake Quantization**: Test with simulated (fake) or actual memory-reduced (real) quantization
 - **GroupWise Quantization**: Fine-grained 128-weight groups for better accuracy preservation
 - **Submodule-Level Analysis**: Per-component sensitivity (attention vs MLP layers)
+
+### LLM Fine-Tuning
 - **Fine-Tuning LLMs**: Fine-tuning runtime of the Llama3.1-8B-Instruct model across three generations of Gaudi nodes, with varying numbers of HPU devices and using Flash Attention.Also fine-tuning of a medium and a large model on the Gaudi2 node for Gemma2:27B-Instruct and Llama3.3:70B-Instruct using sharding mechanisms like ZeRO3 implementation of DeepSpeed, FSDP and DDP. 
+
+### Diffusion Model
+- **Diffusion Model**: Scaling of a Diffusion model on different accelerators.
 
 ## Repository Structure
 
@@ -49,10 +54,11 @@ Voyager_Gaudi_Benchmarks/
 │   └── run_quantization.yaml     # Gaudi pod configuration
 │
 ├── scaling_diffusion/            # Diffusion model experiments
-└── requirements.txt              # Python dependencies
+├── fine-tuning_llm/              # LLM fine-tuning experiments
+└── requirements.txt              # environment setup
 ```
 
-## Installation
+## Installation for Mixed-Precision Quantization
 
 ### Prerequisites
 - **For Gaudi**: Intel Gaudi 2 HPU, Habana SynapseAI 1.21+
@@ -155,7 +161,7 @@ PT_HPU_LAZY_MODE=1 python src/WikiText/PMPQ_evaluation_wikitext_hpu_real.py \
     --use_mark_step
 
 # Example usage (Quantize phase):
-#export LOG_LEVEL_INC=1
+export LOG_LEVEL_INC=1
 export PT_HPU_WEIGHT_SHARING=0
 PT_HPU_LAZY_MODE=1 python src/WikiText/PMPQ_evaluation_wikitext_hpu_real.py \
     --sensitivity_file Sensitivities/Gaudi2/WikiText/sens_*.json \
@@ -199,12 +205,12 @@ PT_HPU_LAZY_MODE=1 python src/WikiText/PMPQ_evaluation_wikitext_hpu_real.py \
 ![Submodule Sensitivity](plots/submodule_sensitivity_mlp_fp8_bf16_hellaswag.png)
 *Figure 2: Fine-grained submodule sensitivity (attention vs MLP components)*
 
-<!-- ### Quantization Performance
+### Fine-tuning LLMs results
 
-![Accuracy vs Compression](plots/accuracy_vs_compression_placeholder.png)
-*Figure 3: Accuracy-compression trade-offs for different bit allocations*
+![LLM Fine-tuning](plots/Fig2.png)
+*Figure 3: LLM Fine-tuning results
 
-![Memory Savings](plots/memory_savings_placeholder.png)
+<!-- ![Memory Savings](plots/memory_savings_placeholder.png)
 *Figure 4: Memory reduction achieved with mixed-precision quantization*
 
 ### Platform Comparison
@@ -217,7 +223,7 @@ PT_HPU_LAZY_MODE=1 python src/WikiText/PMPQ_evaluation_wikitext_hpu_real.py \
 ![Bit Allocation Clusters](plots/cluster_analysis_placeholder.png)
 *Figure 6: Layer clustering and bit allocation strategy* -->
 
-## Generating Plots
+## Generating Plots -->
 
 ```bash
 # Generate sensitivity heatmaps

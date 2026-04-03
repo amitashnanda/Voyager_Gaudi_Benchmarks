@@ -1,4 +1,4 @@
-# Perfomance optimization and Comparative Analysis of Generative AI models on Advanced AI Accelerators
+# Performance Optimization and Comparative Analysis of Generative AI models on Advanced AI Accelerators
 
 ## Overview
 

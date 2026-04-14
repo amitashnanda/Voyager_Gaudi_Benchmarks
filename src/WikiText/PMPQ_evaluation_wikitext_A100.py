@@ -1,4 +1,4 @@
-# Phase_2_evaluate_GroupWise_TinyLlama_WikiText_FAKE.py
+                                                       
 """
 Phase 2: PMPQ Group-Wise Quantization & Evaluation - TinyLlama on WikiText-2
 =============================================================================
@@ -31,9 +31,9 @@ Author: Mixed-Precision Quantization Team
 Date: 2025-2026
 """
 
-# ============================================================================
-# ENVIRONMENT SETUP
-# ============================================================================
+                                                                              
+                   
+                                                                              
 import os
 
 HF_HOME = os.environ.get("HF_HOME", "/pscratch/sd/s/sreeb12/.cache/huggingface")
@@ -49,9 +49,9 @@ os.environ.update({
 
 print("Environment setup - cache:", HF_HOME)
 
-# ============================================================================
-# IMPORTS
-# ============================================================================
+                                                                              
+         
+                                                                              
 import json, time, random, warnings, re
 import numpy as np
 from datetime import datetime
@@ -75,13 +75,13 @@ if torch.cuda.is_available():
         props = torch.cuda.get_device_properties(i)
         print(f"  GPU {i}: {props.name}  |  {props.total_memory / 1024**3:.1f} GB")
 
-# ============================================================================
-# CONFIGURATION
-# ============================================================================
+                                                                              
+               
+                                                                              
 
 DEFAULT_GROUP_SIZE  = 128
 SEQUENCE_LENGTH     = 512
-EVAL_SPLIT          = "test"       # Phase 2 always uses test split
+EVAL_SPLIT          = "test"                                       
 BASELINE_CACHE_DIR  = "Models"
 BASELINE_CACHE_FILE = os.path.join(BASELINE_CACHE_DIR,
                                     "baseline_wikitext_fp32.json")
@@ -90,9 +90,9 @@ MODEL_NAME = "TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T"
 MODEL_KEY  = "TinyLlama-1.1B"
 
 
-# ============================================================================
-# UTILITIES
-# ============================================================================
+                                                                              
+           
+                                                                              
 
 def set_seed(seed=42):
     random.seed(seed); np.random.seed(seed)
@@ -112,9 +112,9 @@ def get_cuda_memory_info():
     total_max_allocated = 0
 
     for i in range(num_gpus):
-        total_allocated += torch.cuda.memory_allocated(i) / (1024 ** 2)  # MB
-        total_reserved += torch.cuda.memory_reserved(i) / (1024 ** 2)  # MB
-        total_max_allocated += torch.cuda.max_memory_allocated(i) / (1024 ** 2)  # MB
+        total_allocated += torch.cuda.memory_allocated(i) / (1024 ** 2)      
+        total_reserved += torch.cuda.memory_reserved(i) / (1024 ** 2)      
+        total_max_allocated += torch.cuda.max_memory_allocated(i) / (1024 ** 2)      
 
     return {
         'allocated_mb': total_allocated,
@@ -150,7 +150,7 @@ def prepare_wikitext_dataset(tokenizer, split="test", block_size=512):
     except Exception:
         dataset = load_dataset("wikitext", "wikitext-2-v1", split=split)
 
-    # Tokenize all text
+                       
     def tokenize_function(examples):
         return tokenizer(examples["text"])
 
@@ -161,16 +161,16 @@ def prepare_wikitext_dataset(tokenizer, split="test", block_size=512):
         desc=f"Tokenizing {split}"
     )
 
-    # Concatenate all texts and chunk into fixed-size blocks
+                                                            
     def group_texts(examples):
-        # Concatenate all texts
+                               
         concatenated = {k: list(chain(*examples[k])) for k in examples.keys()}
         total_length = len(concatenated["input_ids"])
 
-        # Drop the last chunk if it's smaller than block_size
+                                                             
         total_length = (total_length // block_size) * block_size
 
-        # Split into chunks of block_size
+                                         
         result = {
             k: [t[i: i + block_size] for i in range(0, total_length, block_size)]
             for k, t in concatenated.items()
@@ -245,9 +245,9 @@ def get_model_size_mb(model):
     return total / (1024 * 1024)
 
 
-# ============================================================================
-# BASELINE CACHE
-# ============================================================================
+                                                                              
+                
+                                                                              
 
 def save_baseline_cache(ppl, total_tokens, n_samples, eval_time, throughput,
                         device_str, num_gpus, timestamp):
@@ -281,9 +281,9 @@ def load_baseline_cache():
         return json.load(f)
 
 
-# ============================================================================
-# CLUSTERING
-# ============================================================================
+                                                                              
+            
+                                                                              
 
 def kmeans_clustering(sens, n_clusters=3):
     v = sens.reshape(-1, 1)
@@ -317,9 +317,9 @@ def percentile_clustering(sens, n_clusters=3):
     return labels, cm
 
 
-# ============================================================================
-# FAKE QUANTIZATION -- GROUP-WISE SIMULATED
-# ============================================================================
+                                                                              
+                                           
+                                                                              
 
 class LinearSymmetricGroupQuant(nn.Module):
     """
@@ -413,9 +413,9 @@ def quantize_model_fake(model, layer_bits_map, group_size=128,
     return model, total_orig, total_quant
 
 
-# ============================================================================
-# WIKITEXT-2 PERPLEXITY EVALUATION
-# ============================================================================
+                                                                              
+                                  
+                                                                              
 
 @torch.no_grad()
 def evaluate_perplexity_wikitext(model, eval_dataset, device, eval_name="Perplexity", batch_size=4):
@@ -444,7 +444,7 @@ def evaluate_perplexity_wikitext(model, eval_dataset, device, eval_name="Perplex
     loss_fct = nn.CrossEntropyLoss()
     start_time = time.time()
 
-    # Process in batches
+                        
     num_batches = (n_samples + batch_size - 1) // batch_size
 
     with tqdm(total=num_batches, desc=eval_name, leave=False) as pbar:
@@ -452,11 +452,11 @@ def evaluate_perplexity_wikitext(model, eval_dataset, device, eval_name="Perplex
             batch_end = min(batch_start + batch_size, n_samples)
             batch_samples = eval_dataset[batch_start:batch_end]
 
-            # HuggingFace dataset slicing returns dict with lists, not list of dicts
+                                                                                    
             input_ids = torch.tensor(batch_samples["input_ids"]).to(device)
             labels = torch.tensor(batch_samples["labels"]).to(device)
 
-            # FP32 inference (no autocast) - matches HPU implementation
+                                                                       
             outputs = model(input_ids)
 
             logits = outputs.logits
@@ -468,7 +468,7 @@ def evaluate_perplexity_wikitext(model, eval_dataset, device, eval_name="Perplex
                 shift_labels.view(-1)
             )
 
-            # Accumulate loss weighted by batch tokens
+                                                      
             batch_tokens = input_ids.size(0) * input_ids.size(1)
             total_loss += loss.item() * batch_tokens
 
@@ -481,9 +481,9 @@ def evaluate_perplexity_wikitext(model, eval_dataset, device, eval_name="Perplex
     return ppl, eval_time, total_tokens, throughput, n_samples
 
 
-# ============================================================================
-# MAIN PIPELINE
-# ============================================================================
+                                                                              
+               
+                                                                              
 
 def main():
     print_section("PHASE 2: PMPQ WikiText-2 Evaluation -- FAKE QUANTIZATION (Simulated)")
@@ -512,9 +512,9 @@ def main():
     num_gpus = torch.cuda.device_count() if torch.cuda.is_available() else 0
     print(f"  Device: {device}  |  GPUs: {num_gpus}")
 
-    # ==========================================================================
-    # STEP 1: Load Sensitivity File
-    # ==========================================================================
+                                                                                
+                                   
+                                                                                
     print_section("STEP 1: LOAD SENSITIVITY FILE")
     t0 = time.time()
 
@@ -555,7 +555,7 @@ def main():
     if p1_ppl:
         print(f"  Phase 1 FP32 perplexity (train): {p1_ppl:.4f}")
 
-    # Detect method from filename
+                                 
     sf_lower = selected.lower()
     sensitivity_method = (
         "PMPQ"  if "pmpq"  in sf_lower else
@@ -565,9 +565,9 @@ def main():
         "CMPQ"
     )
 
-    # ==========================================================================
-    # STEP 2: Load Model
-    # ==========================================================================
+                                                                                
+                        
+                                                                                
     print_section("STEP 2: LOADING MODEL")
     t0 = time.time()
 
@@ -592,9 +592,9 @@ def main():
     print(f"  Model loaded in {format_duration(timing_log['model_loading_time_s'])}")
     print(f"  FP32 model size: {fp32_size_mb:.2f} MB")
 
-    # ==========================================================================
-    # STEP 2b: Prepare Dataset
-    # ==========================================================================
+                                                                                
+                              
+                                                                                
     print_section("STEP 2b: PREPARING DATASET")
     eval_dataset = prepare_wikitext_dataset(tokenizer, split=EVAL_SPLIT, block_size=SEQUENCE_LENGTH)
     num_samples = len(eval_dataset)
@@ -602,9 +602,9 @@ def main():
     print(f"WikiText-2 {EVAL_SPLIT}: {num_samples} samples × {SEQUENCE_LENGTH} tokens")
     print(f"Total tokens: {total_tokens:,}")
 
-    # ==========================================================================
-    # STEP 3: Clustering
-    # ==========================================================================
+                                                                                
+                        
+                                                                                
     print_section("STEP 3: CLUSTERING CONFIGURATION")
     t0 = time.time()
 
@@ -633,9 +633,9 @@ def main():
         idxs = [i for i in range(num_layers) if labels[i] == cid]
         print(f"  Cluster {cid}: {len(idxs)} layers (mean sensitivity: {cmean:.6f})")
 
-    # ==========================================================================
-    # STEP 4: Bit-Width Allocation
-    # ==========================================================================
+                                                                                
+                                  
+                                                                                
     print_section("STEP 4: BIT-WIDTH ALLOCATION")
     print("  FAKE QUANTIZATION accepts any bit-width (2, 4, 6, 8, 12, 16, 32).")
     print("  These are simulated -- no real hardware constraint applies here.")
@@ -718,9 +718,9 @@ def main():
         print(f"    Layer {i:2d}: {layer_bits_map[i]:2d}-bit "
               f"(sensitivity: {sv[i]:.6f})")
 
-    # ==========================================================================
-    # STEP 5: FP32 Baseline (optional - loads from cache if skipped)
-    # ==========================================================================
+                                                                                
+                                                                    
+                                                                                
     cached_baseline = load_baseline_cache()
     if cached_baseline is not None:
         print(f"\n  Found cached baseline: {BASELINE_CACHE_FILE}")
@@ -775,9 +775,9 @@ def main():
             print(f"  Throughput: {tp_b:.2f} tokens/s")
             print(f"  Cached on : {cached_baseline['timestamp']}")
 
-    # ==========================================================================
-    # STEP 6: Apply Fake Quantization
-    # ==========================================================================
+                                                                                
+                                     
+                                                                                
     print_section("STEP 6: APPLYING GROUP-WISE FAKE QUANTIZATION (Simulated)")
     print(f"  Mode: FAKE -- weights remain FP32 after simulate-quantize-dequantize")
     print(f"  Group size: {group_size}\n")
@@ -802,9 +802,9 @@ def main():
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
 
-    # ==========================================================================
-    # STEP 7: Evaluate Fake-Quantized Model
-    # ==========================================================================
+                                                                                
+                                           
+                                                                                
     print_section("STEP 7: EVALUATING FAKE-QUANTIZED MODEL ON WikiText-2 TEST")
     print(f"  WikiText-2 test split  |  Metric: Perplexity + tokens/s\n")
 
@@ -823,9 +823,9 @@ def main():
     print(f"  Time      : {format_duration(timing_log['quantized_evaluation_time_s'])}")
     print(f"  Throughput: {tp_a:.2f} tokens/s")
 
-    # ==========================================================================
-    # STEP 8: Performance Analysis
-    # ==========================================================================
+                                                                                
+                                  
+                                                                                
     print_section("STEP 8: PERFORMANCE COMPARISON")
     timing_log["total_pipeline_time_s"] = time.time() - pipeline_start_time
 
@@ -886,9 +886,9 @@ def main():
   GPUs used                 : {num_gpus}
 """)
 
-    # ==========================================================================
-    # STEP 9: Save Fake-Quantized Model (.bin HuggingFace format)
-    # ==========================================================================
+                                                                                
+                                                                 
+                                                                                
     print_section("STEP 9: SAVING FAKE-QUANTIZED MODEL")
     os.makedirs("Models", exist_ok=True)
     alloc_str      = "-".join(str(b) for b in cluster_bits)
@@ -939,9 +939,9 @@ def main():
     print(f"    pytorch_model.bin.index.json -- shard index")
     print(f"    quant_config.json        -- PMPQ quantization metadata")
 
-    # ==========================================================================
-    # STEP 10: Save Results Log
-    # ==========================================================================
+                                                                                
+                               
+                                                                                
     print_section("STEP 10: SAVING RESULTS LOG")
     os.makedirs("Evaluation", exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -959,7 +959,7 @@ def main():
         f.write(f"TinyLlama on WikiText-2 Test Set\n")
         f.write("="*80 + "\n\n")
 
-        # CONFIGURATION
+                       
         f.write("="*80 + "\n")
         f.write("CONFIGURATION\n")
         f.write("="*80 + "\n")
@@ -989,7 +989,7 @@ def main():
         f.write(f"Timestamp: {timestamp}\n")
         f.write(f"Saved Model Folder: {model_save_path}\n\n")
 
-        # COMPREHENSIVE TIMING LOG
+                                  
         f.write("="*80 + "\n")
         f.write("COMPREHENSIVE TIMING LOG\n")
         f.write("="*80 + "\n")
@@ -1019,7 +1019,7 @@ def main():
             f.write(f"  {format_duration(p1_time)}  ({p1_time:.4f}s)\n")
         f.write("\n")
 
-        # METRICS BEFORE QUANTIZATION (FP32 Baseline)
+                                                     
         f.write("="*80 + "\n")
         f.write("METRICS BEFORE QUANTIZATION (FP32 Baseline)\n")
         f.write("="*80 + "\n")
@@ -1033,7 +1033,7 @@ def main():
         else:
             f.write("FP32 BASELINE -- NOT AVAILABLE (no cache, skip selected)\n\n")
 
-        # METRICS AFTER QUANTIZATION (Group-Wise Fake Mixed-Precision PTQ)
+                                                                          
         f.write("="*80 + "\n")
         f.write("METRICS AFTER QUANTIZATION (Group-Wise Fake Mixed-Precision PTQ)\n")
         f.write("="*80 + "\n")
@@ -1042,7 +1042,7 @@ def main():
         f.write(f"Eval Time: {format_duration(timing_log['quantized_evaluation_time_s'])}\n")
         f.write(f"Throughput: {tp_a:.2f} tokens/s\n\n")
 
-        # PERFORMANCE COMPARISON
+                                
         f.write("="*80 + "\n")
         f.write("PERFORMANCE COMPARISON\n")
         f.write("="*80 + "\n")
@@ -1053,7 +1053,7 @@ def main():
         else:
             f.write("Not available (no baseline)\n\n")
 
-        # COMPRESSION METRICS
+                             
         f.write("="*80 + "\n")
         f.write("COMPRESSION METRICS\n")
         f.write("="*80 + "\n")
@@ -1066,7 +1066,7 @@ def main():
         f.write(f"Simulated Size Reduction: {reduction_pct:.2f}%\n")
         f.write(f"Quantization Time: {quantize_time_s:.4f}s\n\n")
 
-        # MACHINE-READABLE METRICS (KEY-VALUE)
+                                              
         f.write("="*80 + "\n")
         f.write("MACHINE-READABLE METRICS (KEY-VALUE)\n")
         f.write("="*80 + "\n")
@@ -1114,7 +1114,7 @@ def main():
         if p1_ppl:
             f.write(f"phase1_fp32_ppl_train: {p1_ppl:.6f}\n")
 
-        # LAYER BIT ALLOCATION
+                              
         f.write("\n" + "="*80 + "\n")
         f.write("LAYER BIT ALLOCATION\n")
         f.write("="*80 + "\n")
@@ -1123,7 +1123,7 @@ def main():
             f.write(f"  layer_{i:02d}: {b:2d}-bit (simulated)  "
                     f"sensitivity: {sv[i]:.8f}\n")
 
-        # METHOD NOTES
+                      
         f.write("\n" + "="*80 + "\n")
         f.write("METHOD NOTES\n")
         f.write("="*80 + "\n")

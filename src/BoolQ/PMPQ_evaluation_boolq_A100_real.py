@@ -1,4 +1,4 @@
-# Phase_2_evaluate_GroupWise_TinyLlama_BoolQ_REAL.py
+                                                    
 """
 Phase 2: Group-Wise REAL Quantization & Evaluation for TinyLlama on BoolQ
 ===============================================================================
@@ -43,9 +43,9 @@ Author: Mixed-Precision Quantization Team
 Date: 2025-2026
 """
 
-# ============================================================================
-# ENVIRONMENT SETUP
-# ============================================================================
+                                                                              
+                   
+                                                                              
 import os
 
 HF_HOME = os.environ.get("HF_HOME", "/pscratch/sd/s/sreeb12/.cache/huggingface")
@@ -61,9 +61,9 @@ os.environ.update({
 
 print("Environment setup - cache:", HF_HOME)
 
-# ============================================================================
-# IMPORTS
-# ============================================================================
+                                                                              
+         
+                                                                              
 import json, time, random, warnings, re
 import numpy as np
 from datetime import datetime
@@ -72,7 +72,7 @@ from tqdm import tqdm
 
 import torch
 import torch.nn as nn
-# No autocast - using FP32 for consistency
+                                          
 from datasets import load_dataset
 from transformers import AutoTokenizer, AutoModelForCausalLM, AutoConfig
 from sklearn.cluster import KMeans, AgglomerativeClustering
@@ -89,9 +89,9 @@ if torch.cuda.is_available():
         props = torch.cuda.get_device_properties(i)
         print(f"  GPU {i}: {props.name}  |  {props.total_memory / 1024**3:.1f} GB")
 
-# ============================================================================
-# CONFIGURATION
-# ============================================================================
+                                                                              
+               
+                                                                              
 
 DEFAULT_GROUP_SIZE  = 128
 BASELINE_CACHE_DIR  = "Models"
@@ -106,14 +106,14 @@ TINYLLAMA_MODELS = {
     }
 }
 
-# Only these two are genuinely supported in pure PyTorch on A100:
-#   bits >= 16  ->  FP16 (torch.float16)
-#   bits <  16  ->  INT8 (torch.int8 + group-wise FP16 scales)
+                                                                 
+                                        
+                                                              
 
 
-# ============================================================================
-# UTILITIES
-# ============================================================================
+                                                                              
+           
+                                                                              
 
 def set_seed(seed=42):
     random.seed(seed)
@@ -215,9 +215,9 @@ def compute_metrics(preds, labels):
     return accuracy, precision, recall, f1, tp, fp, fn, tn
 
 
-# ============================================================================
-# BASELINE CACHE
-# ============================================================================
+                                                                              
+                
+                                                                              
 
 def load_baseline_cache():
     if not os.path.exists(BASELINE_CACHE_FILE):
@@ -259,9 +259,9 @@ def save_baseline_cache(acc, precision, recall, f1,
     print(f"  Baseline results saved to: {BASELINE_CACHE_FILE}")
 
 
-# ============================================================================
-# CLUSTERING
-# ============================================================================
+                                                                              
+            
+                                                                              
 
 def kmeans_clustering(sensitivities, n_clusters=3):
     values = sensitivities.reshape(-1, 1)
@@ -298,9 +298,9 @@ def percentile_clustering(sensitivities, n_clusters=3):
     return labels, means
 
 
-# ============================================================================
-# REAL QUANTIZATION -- FP16 and INT8 ONLY
-# ============================================================================
+                                                                              
+                                         
+                                                                              
 
 class RealQuantizedLinearGroupWise(nn.Module):
     """
@@ -421,9 +421,9 @@ def quantize_model_real(model, layer_bits_map, group_size=128,
     return model, total_orig, total_quant
 
 
-# ============================================================================
-# BOOLQ EVALUATION -- LOG-LIKELIHOOD YES/NO SCORING
-# ============================================================================
+                                                                              
+                                                   
+                                                                              
 
 @torch.no_grad()
 def evaluate_boolq(model, tokenizer, device,
@@ -470,7 +470,7 @@ def evaluate_boolq(model, tokenizer, device,
             batch_examples = all_examples[batch_start:batch_end]
             actual_batch_size = len(batch_examples)
 
-            # Prepare batch data
+                                
             all_texts = []
             prompt_lens = []
             labels = []
@@ -482,34 +482,34 @@ def evaluate_boolq(model, tokenizer, device,
                 label    = 1 if answer else 0
                 labels.append(label)
 
-                # Format prompt with proper prefix
+                                                  
                 prompt = f"Passage: {passage}\nQuestion: {question}\nAnswer:"
 
-                # Get prompt length
+                                   
                 prompt_enc = tokenizer(prompt, add_special_tokens=True)
                 prompt_len = len(prompt_enc["input_ids"])
                 prompt_lens.append(prompt_len)
 
-                # Add both candidates for this sample (lowercase)
+                                                                 
                 all_texts.append(prompt + " yes")
                 all_texts.append(prompt + " no")
 
-            # Tokenize entire batch (actual_batch_size × 2 texts)
+                                                                 
             batch = tokenizer(all_texts, return_tensors="pt", padding=True,
                             truncation=True, max_length=max_length)
 
             input_ids = batch["input_ids"].to(device)
             attention_mask = batch["attention_mask"].to(device)
 
-            # Single forward pass for all candidates in batch (FP32)
+                                                                    
             outputs = actual_model(input_ids=input_ids, attention_mask=attention_mask)
 
-            # Move logits to CPU to avoid GPU memory accumulation
+                                                                 
             logits = outputs.logits.float().cpu()
             input_ids_cpu = batch["input_ids"].cpu()
             attention_mask_cpu = batch["attention_mask"].cpu()
 
-            # Score each sample (now on CPU)
+                                            
             for sample_idx in range(actual_batch_size):
                 yes_idx = sample_idx * 2
                 no_idx = sample_idx * 2 + 1
@@ -533,10 +533,10 @@ def evaluate_boolq(model, tokenizer, device,
                     if valid_tokens == 0:
                         candidate_scores.append(float('-inf'))
                     else:
-                        # Average log-likelihood per token
+                                                          
                         candidate_scores.append(token_log_probs.sum().item() / valid_tokens)
 
-                # Prediction: index 0 = yes, index 1 = no
+                                                         
                 pred = 1 if candidate_scores[0] >= candidate_scores[1] else 0
                 all_preds.append(pred)
                 all_labels.append(labels[sample_idx])
@@ -548,7 +548,7 @@ def evaluate_boolq(model, tokenizer, device,
             pbar.set_postfix(
                 acc=f"{num_correct/len(all_preds):.4f}")
 
-            # Progress update every 10 batches
+                                              
             if (batch_end % (batch_size * 10)) == 0 or batch_end == num_total:
                 current_acc = num_correct / batch_end if batch_end > 0 else 0.0
                 print(f"  Progress: {batch_end}/{num_total} samples | Accuracy: {current_acc:.4f}")
@@ -567,9 +567,9 @@ def evaluate_boolq(model, tokenizer, device,
             eval_time, throughput)
 
 
-# ============================================================================
-# MAIN PIPELINE
-# ============================================================================
+                                                                              
+               
+                                                                              
 
 def main():
     print_section(
@@ -600,9 +600,9 @@ def main():
     num_gpus = torch.cuda.device_count() if torch.cuda.is_available() else 0
     print(f"  Device: {device}  |  GPUs: {num_gpus}")
 
-    # ==========================================================================
-    # STEP 1: Load Sensitivity File
-    # ==========================================================================
+                                                                                
+                                   
+                                                                                
     print_section("STEP 1: LOAD SENSITIVITY FILE")
     t0 = time.time()
 
@@ -669,9 +669,9 @@ def main():
     )
     print(f"  Sensitivity method detected: {sensitivity_method}")
 
-    # ==========================================================================
-    # STEP 2: Load Model
-    # ==========================================================================
+                                                                                
+                        
+                                                                                
     print_section("STEP 2: LOADING MODEL")
     t0 = time.time()
 
@@ -689,9 +689,9 @@ def main():
     print(f"  Model loaded in {format_duration(timing_log['model_loading_time_s'])}")
     print(f"  FP32 size (CPU): {fp32_size_mb:.2f} MB")
 
-    # ==========================================================================
-    # STEP 3: Clustering
-    # ==========================================================================
+                                                                                
+                        
+                                                                                
     print_section("STEP 3: CLUSTERING CONFIGURATION")
     t0 = time.time()
 
@@ -724,9 +724,9 @@ def main():
         lids = [i for i in range(num_layers) if labels[i] == cid]
         print(f"  Cluster {cid}: {len(lids)} layers (mean sensitivity: {cmean:.4f})")
 
-    # ==========================================================================
-    # STEP 4: Bit-Width Allocation -- FP16 and INT8 ONLY
-    # ==========================================================================
+                                                                                
+                                                        
+                                                                                
     print_section("STEP 4: BIT-WIDTH ALLOCATION")
     print("  REAL QUANTIZATION supports only FP16 and INT8 (pure PyTorch on A100).")
     print("  FP16 (16-bit) -> torch.float16 -- 2x memory savings")
@@ -820,9 +820,9 @@ def main():
         rt = "FP16" if b >= 16 else "INT8"
         print(f"    Layer {i:2d}: {b:2d}-bit [{rt}]  (sensitivity: {sens_values[i]:.4f})")
 
-    # ==========================================================================
-    # STEP 5: FP32 Baseline (optional - loads from cache if skipped)
-    # ==========================================================================
+                                                                                
+                                                                    
+                                                                                
     cached_baseline = load_baseline_cache()
     if cached_baseline is not None:
         print(f"\n  Found cached baseline: {BASELINE_CACHE_FILE}")
@@ -839,7 +839,7 @@ def main():
     correct_before = total_before = fp32_throughput = None
     baseline_source = "computed"
 
-    # Move model to GPU for baseline
+                                    
     model = model.to(device)
     is_data_parallel = False
     if num_gpus > 1:
@@ -909,14 +909,14 @@ def main():
             print(f"  Correct   : {correct_before}/{total_before}")
             print(f"  Cached on : {cached_baseline['timestamp']}")
 
-    # ==========================================================================
-    # STEP 6: Apply REAL Quantization
-    # ==========================================================================
+                                                                                
+                                     
+                                                                                
     print_section("STEP 6: APPLYING REAL GROUP-WISE MIXED-PRECISION QUANTIZATION")
     print(f"  Mode: REAL weight storage -- FP16 or INT8 -- group_size={group_size}")
     print(f"  Quantization runs on CPU then model moves to {num_gpus} GPU(s)\n")
 
-    # Unwrap DataParallel, move to CPU for clean quantization
+                                                             
     if is_data_parallel:
         model = model.module
         is_data_parallel = False
@@ -952,9 +952,9 @@ def main():
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
 
-    # ==========================================================================
-    # STEP 7: Evaluate Real-Quantized Model
-    # ==========================================================================
+                                                                                
+                                           
+                                                                                
     print_section("STEP 7: EVALUATING REAL-QUANTIZED MODEL ON BOOLQ")
     print(f"  Batched evaluation (batch_size=64) -- all {num_gpus} GPU(s) active\n")
 
@@ -979,9 +979,9 @@ def main():
     print(f"  Time      : {format_duration(timing_log['quantized_evaluation_time_s'])}")
     print(f"  Throughput: {quant_throughput:.2f} examples/s")
 
-    # ==========================================================================
-    # STEP 8: Performance Analysis
-    # ==========================================================================
+                                                                                
+                                  
+                                                                                
     print_section("STEP 8: PERFORMANCE COMPARISON")
     timing_log["total_pipeline_time_s"] = time.time() - pipeline_start_time
 
@@ -1049,9 +1049,9 @@ def main():
   GPUs used                 : {num_gpus}
 """)
 
-    # ==========================================================================
-    # STEP 9: Save Real-Quantized Model (.bin HuggingFace format)
-    # ==========================================================================
+                                                                                
+                                                                 
+                                                                                
     print_section("STEP 9: SAVING REAL-QUANTIZED MODEL")
     os.makedirs("Models", exist_ok=True)
     alloc_str      = "-".join(str(b) for b in cluster_bits)
@@ -1124,9 +1124,9 @@ def main():
     print(f"  Note: .bin weights are FP32 (HuggingFace standard format).")
     print(f"  Reload + re-run quantize_model_real() to restore FP16/INT8 inference.")
 
-    # ==========================================================================
-    # STEP 10: Save Results Log
-    # ==========================================================================
+                                                                                
+                               
+                                                                                
     print_section("STEP 10: SAVING RESULTS LOG")
     os.makedirs("Evaluation", exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -1145,7 +1145,7 @@ def main():
         f.write(f"TinyLlama on BoolQ Validation Set\n")
         f.write("="*80 + "\n\n")
 
-        # CONFIGURATION
+                       
         f.write("="*80 + "\n")
         f.write("CONFIGURATION\n")
         f.write("="*80 + "\n")
@@ -1187,7 +1187,7 @@ def main():
         f.write(f"Timestamp: {timestamp}\n")
         f.write(f"Saved Model Folder: {model_save_path}\n\n")
 
-        # COMPREHENSIVE TIMING LOG
+                                  
         f.write("="*80 + "\n")
         f.write("COMPREHENSIVE TIMING LOG\n")
         f.write("="*80 + "\n")
@@ -1219,7 +1219,7 @@ def main():
                     f"({phase1_sensitivity_time:.4f}s)\n")
         f.write("\n")
 
-        # METRICS BEFORE QUANTIZATION (FP32 Baseline)
+                                                     
         f.write("="*80 + "\n")
         f.write("METRICS BEFORE QUANTIZATION (FP32 Baseline)\n")
         f.write("="*80 + "\n")
@@ -1242,7 +1242,7 @@ def main():
             f.write("FP32 BASELINE -- NOT AVAILABLE "
                     "(no cache, skip selected)\n\n")
 
-        # METRICS AFTER QUANTIZATION
+                                    
         f.write("="*80 + "\n")
         f.write("METRICS AFTER QUANTIZATION "
                 "(Group-Wise Real Mixed-Precision PTQ)\n")
@@ -1258,7 +1258,7 @@ def main():
                 f"{format_duration(timing_log['quantized_evaluation_time_s'])}\n")
         f.write(f"Throughput      : {quant_throughput:.2f} examples/s\n\n")
 
-        # PERFORMANCE COMPARISON
+                                
         f.write("="*80 + "\n")
         f.write("PERFORMANCE COMPARISON\n")
         f.write("="*80 + "\n")
@@ -1270,7 +1270,7 @@ def main():
         else:
             f.write("Not available (no baseline)\n\n")
 
-        # COMPRESSION METRICS
+                             
         f.write("="*80 + "\n")
         f.write("COMPRESSION METRICS\n")
         f.write("="*80 + "\n")
@@ -1287,7 +1287,7 @@ def main():
         f.write(f"Size Reduction: {reduction_pct:.2f}%\n")
         f.write(f"Quantization Time: {quantize_time_s:.4f}s\n\n")
 
-        # MACHINE-READABLE METRICS (KEY-VALUE)
+                                              
         f.write("="*80 + "\n")
         f.write("MACHINE-READABLE METRICS (KEY-VALUE)\n")
         f.write("="*80 + "\n")
@@ -1354,7 +1354,7 @@ def main():
             f.write(f"phase1_sensitivity_time_s: "
                     f"{phase1_sensitivity_time:.4f}\n")
 
-        # LAYER BIT ALLOCATION
+                              
         f.write("\n" + "="*80 + "\n")
         f.write("LAYER BIT ALLOCATION\n")
         f.write("="*80 + "\n")
@@ -1364,7 +1364,7 @@ def main():
             f.write(f"  layer_{i:02d}: {b:2d}-bit [{rt}]  "
                     f"sensitivity: {sens_values[i]:.6f}\n")
 
-        # METHOD NOTES
+                      
         f.write("\n" + "="*80 + "\n")
         f.write("METHOD NOTES\n")
         f.write("="*80 + "\n")

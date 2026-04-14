@@ -36,7 +36,7 @@ Author: Mixed-Precision Quantization Team
 Date: 2025
 """
 
-# ENVIRONMENT SETUP - BEFORE ANY IMPORTS
+                                        
 
 
 import os
@@ -56,7 +56,7 @@ LOG_DIR_BASE = "/voyager/ceph/users/ananda2/Quantization/logs"
 os.makedirs(LOG_DIR_BASE, exist_ok=True)
 
 
-# ALL IMPORTS - AFTER ENVIRONMENT SETUP
+                                       
 
 
 import gc
@@ -96,7 +96,7 @@ for p in (os.environ["HF_DATASETS_CACHE"], os.environ["HF_HUB_CACHE"]):
 
 
 
-# LOGGING SETUP
+               
 
 
 def setup_logging(rank=0, log_dir=None):
@@ -133,7 +133,7 @@ def setup_logging(rank=0, log_dir=None):
 
 
 
-# MODEL CONFIGURATIONS
+                      
 
 
 TINYLLAMA_MODELS = {
@@ -146,7 +146,7 @@ TINYLLAMA_MODELS = {
 }
 
 
-# UTILITY FUNCTIONS
+                   
 
 
 def set_seed(seed=42):
@@ -188,8 +188,8 @@ def get_hpu_memory_info():
     try:
         import habana_frameworks.torch.hpu as hthpu
         if hthpu.is_available():
-            allocated = hthpu.memory_allocated() / (1024 ** 2)  # MB
-            max_allocated = hthpu.max_memory_allocated() / (1024 ** 2)  # MB
+            allocated = hthpu.memory_allocated() / (1024 ** 2)      
+            max_allocated = hthpu.max_memory_allocated() / (1024 ** 2)      
             return {
                 "allocated_mb": allocated,
                 "max_allocated_mb": max_allocated,
@@ -253,7 +253,7 @@ def init_distributed():
     if dist.is_initialized():
         return
 
-    # Detect MPI environment (OpenMPI or Intel MPI) → normalize to RANK/WORLD_SIZE
+                                                                                  
     mpi_rank = os.environ.get("OMPI_COMM_WORLD_RANK") or os.environ.get("PMI_RANK")
     mpi_size = os.environ.get("OMPI_COMM_WORLD_SIZE") or os.environ.get("PMI_SIZE")
     if mpi_rank is not None and mpi_size is not None:
@@ -262,7 +262,7 @@ def init_distributed():
         os.environ.setdefault("LOCAL_RANK",
                               os.environ.get("OMPI_COMM_WORLD_LOCAL_RANK", mpi_rank))
 
-    # Detect torchrun or MPI-normalized env vars
+                                                
     rank_env = os.environ.get("RANK")
     size_env = os.environ.get("WORLD_SIZE")
 
@@ -296,7 +296,7 @@ def select_model(logger):
 
 
 
-# PRUNING FUNCTIONS
+                   
 
 
 def apply_magnitude_pruning_to_layer(layer, sparsity_level):
@@ -316,7 +316,7 @@ def apply_magnitude_pruning_to_layer(layer, sparsity_level):
     Runs on CPU — lightweight weight masking (no matrix multiply).
     """
     with torch.no_grad():
-        # Collect only nn.Linear weight tensors (skip biases, LayerNorm, etc.)
+                                                                              
         linear_weights = []
         for module in layer.modules():
             if isinstance(module, nn.Linear):
@@ -325,23 +325,23 @@ def apply_magnitude_pruning_to_layer(layer, sparsity_level):
         if not linear_weights:
             return
 
-        # Build single magnitude vector across all Linear weights in this layer
+                                                                               
         all_magnitudes = torch.cat([w.data.abs().view(-1) for w in linear_weights])
         k = int(all_magnitudes.numel() * (1 - sparsity_level))
         if k == 0:
             return
 
-        # Compute one unified threshold for the entire layer
+                                                            
         threshold = torch.topk(all_magnitudes, k, largest=True)[0][-1]
 
-        # Apply mask back to each weight tensor
+                                               
         for w in linear_weights:
             mask = (w.data.abs() >= threshold).float()
             w.data *= mask
 
 
 
-# DATASET PREPARATION — for GaudiTrainer
+                                        
 
 
 def prepare_wikitext_dataset(tokenizer, split="validation", block_size=512):
@@ -396,7 +396,7 @@ def prepare_wikitext_dataset(tokenizer, split="validation", block_size=512):
 
 
 
-# GAUDI EVALUATION HELPER
+                         
 
 
 def gaudi_evaluate_perplexity(model, eval_dataset, gaudi_config, logger,
@@ -452,10 +452,10 @@ def gaudi_evaluate_perplexity(model, eval_dataset, gaudi_config, logger,
     if rank == 0:
         logger.info(f"[{eval_name}] eval_loss={eval_loss:.4f}, PPL={ppl:.2f}, time={eval_time:.1f}s")
 
-    # --- HPU memory cleanup ---
-    # GaudiTrainer moved model to HPU. Move it back to CPU and delete
-    # the trainer to free HPU memory. Without this, each iteration leaks
-    # ~4.6 GB on HPU (model copy stays allocated).
+                                
+                                                                     
+                                                                        
+                                                  
     model.to("cpu")
     del trainer
     free_hpu_memory()
@@ -470,7 +470,7 @@ def gaudi_evaluate_perplexity(model, eval_dataset, gaudi_config, logger,
 
 
 
-# SENSITIVITY COMPUTATION
+                         
 
 
 def compute_pruning_sensitivity(model_name, num_layers, eval_dataset, gaudi_config,
@@ -499,7 +499,7 @@ def compute_pruning_sensitivity(model_name, num_layers, eval_dataset, gaudi_conf
         baseline_ppl = gaudi_evaluate_perplexity(
             model, eval_dataset, gaudi_config, logger, eval_name="Baseline"
         )
-        # Free HPU memory: GaudiTrainer moved model to HPU, must explicitly release
+                                                                                   
         del model
         free_hpu_memory()
         if rank == 0:
@@ -538,7 +538,7 @@ def compute_pruning_sensitivity(model_name, num_layers, eval_dataset, gaudi_conf
         sensitivity = pruned_perplexity - baseline_ppl
         layer_sensitivities[f"layer_{layer_idx}"] = float(sensitivity)
 
-        # Free HPU memory: GaudiTrainer moved model to HPU, must explicitly release
+                                                                                   
         del pruned_model
         free_hpu_memory()
 
@@ -556,11 +556,11 @@ def compute_pruning_sensitivity(model_name, num_layers, eval_dataset, gaudi_conf
 
 
 
-# MAIN PIPELINE
+               
 
 
 def main():
-    init_distributed()  # Must be FIRST — before get_rank() or any interactive I/O
+    init_distributed()                                                            
 
     parser = argparse.ArgumentParser(
         description='Compute pruning-based sensitivity (PMPQ) - Gaudi HPU [Optimum-Habana]'
@@ -576,7 +576,7 @@ def main():
     world_size = get_world_size()
     set_seed(42)
 
-    # ========== Gaudi Version Selection ==========
+                                                   
     if rank == 0:
         if args.gaudi_version:
             gaudi_version = args.gaudi_version
@@ -603,7 +603,7 @@ def main():
         gaudi_version = None
     gaudi_version = broadcast_object(gaudi_version, rank)
 
-    # Set up directories with Gaudi version subfolder
+                                                     
     global LOG_DIR_BASE
     LOG_DIR = os.path.join(LOG_DIR_BASE, gaudi_version)
     os.makedirs(LOG_DIR, exist_ok=True)
@@ -623,7 +623,7 @@ def main():
         logger.info(f"Trainer:   GaudiTrainer (lazy mode + HPU graphs + FP32)")
         logger.info("")
 
-        # Log compute device mapping
+                                    
         logger.info("Compute Device Mapping:")
         logger.info("  Model inference (forward/loss)  → HPU (via GaudiTrainer)")
         logger.info("  Weight pruning (masking)        → CPU (lightweight)")
@@ -631,11 +631,11 @@ def main():
         logger.info("  I/O, logging, result saving     → CPU")
         logger.info("")
 
-        # Log HPU status
+                        
         log_hpu_status(logger)
         logger.info("")
 
-        # Log environment
+                         
         logger.info(f"PyTorch:        {torch.__version__}")
         try:
             import optimum.habana
@@ -650,7 +650,7 @@ def main():
         logger.info(f"PT_HPU_LAZY_MODE: {os.environ.get('PT_HPU_LAZY_MODE', 'not set')}")
         logger.info("")
 
-    # ========== STEP 1: Select and Load Model ==========
+                                                         
     if rank == 0:
         logger.info("=" * 80)
         logger.info("STEP 1: MODEL SELECTION & LOADING")
@@ -675,7 +675,7 @@ def main():
     if rank == 0:
         logger.info(f"Tokenizer loaded (vocab_size={tokenizer.vocab_size})")
 
-    # ========== STEP 2: Prepare Dataset ==========
+                                                   
     if rank == 0:
         logger.info("=" * 80)
         logger.info("STEP 2: PREPARING DATASET (CPU)")
@@ -686,7 +686,7 @@ def main():
     if rank == 0:
         logger.info(f"WikiText-2 validation: {len(eval_dataset)} samples × 512 tokens")
 
-    # ========== STEP 3: Create Gaudi Config ==========
+                                                       
 
     gaudi_config = GaudiConfig(
         use_fused_adam=False,          
@@ -697,7 +697,7 @@ def main():
     if rank == 0:
         logger.info(f"Gaudi config: custom (use_torch_autocast=False for true FP32)")
 
-    # ========== STEP 4: Compute Pruning Sensitivities ==========
+                                                                 
     if rank == 0:
         logger.info("=" * 80)
         logger.info("STEP 3: COMPUTING PRUNING-BASED SENSITIVITIES")
@@ -711,7 +711,7 @@ def main():
     )
     sensitivity_time = time.time() - t0
 
-    # ========== STEP 5: Save Results (rank 0 only) ==========
+                                                              
     if rank == 0:
         logger.info(f"Sensitivity computation complete in {sensitivity_time:.2f}s")
 
@@ -721,7 +721,7 @@ def main():
         for layer_name in sorted(layer_sensitivities, key=lambda x: int(x.split("_")[1])):
             logger.info(f"  {layer_name}: {layer_sensitivities[layer_name]:.4f}")
 
-        # Log peak HPU memory
+                             
         mem = get_hpu_memory_info()
         if mem:
             logger.info(f"HPU peak memory usage: {mem['max_allocated_mb']:.1f} MB")
@@ -734,12 +734,12 @@ def main():
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename_base = f"sens_{model_key}_WikiText_fullval_pruning_s{int(args.sparsity*100)}_{timestamp}"
 
-        # Save JSON
+                   
         json_path = os.path.join(sens_dir, f"{filename_base}.json")
         with open(json_path, "w") as f:
             json.dump(layer_sensitivities, f, indent=2)
 
-        # Save TXT with metadata
+                                
         txt_path = os.path.join(sens_dir, f"{filename_base}.txt")
         with open(txt_path, "w") as f:
             f.write("=" * 80 + "\n")
@@ -818,7 +818,7 @@ def main():
 
         logger.info(f"Saved: {filename_base}.json / .txt")
 
-        # Also copy results summary to logs/
+                                            
         summary_log = os.path.join(LOG_DIR, f"sensitivity_results_{timestamp}.txt")
         with open(summary_log, "w") as f:
             f.write(f"PMPQ Sensitivity Results — {timestamp}\n")
@@ -843,7 +843,7 @@ def main():
         logger.info(f"  Cards: {world_size}")
         logger.info(f"  Time:  {sensitivity_time:.2f}s")
 
-    # Cleanup
+             
     if dist.is_initialized():
         dist.destroy_process_group()
 

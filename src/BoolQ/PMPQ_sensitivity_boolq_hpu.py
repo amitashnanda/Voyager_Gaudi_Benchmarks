@@ -48,7 +48,7 @@ Author: Mixed-Precision Quantization Team
 Date: 2025
 """
 
-# ENVIRONMENT SETUP - BEFORE ANY IMPORTS
+                                        
 
 
 import os
@@ -104,10 +104,10 @@ for p in (os.environ["HF_DATASETS_CACHE"], os.environ["HF_HUB_CACHE"]):
 LOG_DIR_BASE = "/voyager/ceph/users/ananda2/Quantization/logs"
 os.makedirs(LOG_DIR_BASE, exist_ok=True)
 
-# Constants for BoolQ evaluation
-MAX_LENGTH = 512  # Appropriate for BoolQ's shorter passages
+                                
+MAX_LENGTH = 512                                            
 
-# LOGGING SETUP
+               
 
 
 def setup_logging(rank=0, log_dir=None):
@@ -140,7 +140,7 @@ def setup_logging(rank=0, log_dir=None):
 
 
 
-# MODEL CONFIGURATIONS
+                      
 
 
 TINYLLAMA_MODELS = {
@@ -153,7 +153,7 @@ TINYLLAMA_MODELS = {
 }
 
 
-# UTILITY FUNCTIONS
+                   
 
 
 def set_seed(seed=42):
@@ -246,7 +246,7 @@ def select_model(logger):
 
 
 
-# PRUNING FUNCTIONS
+                   
 
 
 def apply_magnitude_pruning_to_layer(layer, sparsity_level):
@@ -266,7 +266,7 @@ def apply_magnitude_pruning_to_layer(layer, sparsity_level):
     Runs on CPU — lightweight weight masking (no matrix multiply).
     """
     with torch.no_grad():
-        # Collect only nn.Linear weight tensors (skip biases, LayerNorm, etc.)
+                                                                              
         linear_weights = []
         for module in layer.modules():
             if isinstance(module, nn.Linear):
@@ -275,23 +275,23 @@ def apply_magnitude_pruning_to_layer(layer, sparsity_level):
         if not linear_weights:
             return
 
-        # Build single magnitude vector across all Linear weights in this layer
+                                                                               
         all_magnitudes = torch.cat([w.data.abs().view(-1) for w in linear_weights])
         k = int(all_magnitudes.numel() * (1 - sparsity_level))
         if k == 0:
             return
 
-        # Compute one unified threshold for the entire layer
+                                                            
         threshold = torch.topk(all_magnitudes, k, largest=True)[0][-1]
 
-        # Apply mask back to each weight tensor
+                                               
         for w in linear_weights:
             mask = (w.data.abs() >= threshold).float()
             w.data *= mask
 
 
 
-# BOOLQ DATASET
+               
 
 
 def load_boolq_dataset(split="train"):
@@ -310,7 +310,7 @@ def load_boolq_dataset(split="train"):
 
 
 
-# BOOLQ ACCURACY EVALUATION (HPU — Direct Inference)
+                                                    
 
 
 def evaluate_boolq_accuracy(model, dataset, tokenizer, logger,
@@ -350,13 +350,13 @@ def evaluate_boolq_accuracy(model, dataset, tokenizer, logger,
     t0 = time.time()
 
     with torch.no_grad():
-        # Process in batches
+                            
         for batch_start in range(0, total, batch_size):
             batch_end = min(batch_start + batch_size, total)
             batch_samples = [samples[i] for i in range(batch_start, batch_end)]
             actual_batch_size = len(batch_samples)
 
-            # Prepare all texts and metadata for this batch
+                                                           
             all_texts = []
             prompt_lens = []
             answers = []
@@ -364,44 +364,44 @@ def evaluate_boolq_accuracy(model, dataset, tokenizer, logger,
             for sample in batch_samples:
                 passage = sample["passage"]
                 question = sample["question"]
-                answer = sample["answer"]  # True or False
+                answer = sample["answer"]                 
                 answers.append(answer)
 
-                # Format prompt with proper prefix
+                                                  
                 prompt = f"Passage: {passage}\nQuestion: {question}\nAnswer:"
 
-                # Get prompt length
+                                   
                 prompt_enc = tokenizer(prompt, add_special_tokens=True)
                 prompt_len = len(prompt_enc["input_ids"])
                 prompt_lens.append(prompt_len)
 
-                # Add both candidates for this sample (lowercase)
+                                                                 
                 all_texts.append(prompt + " yes")
                 all_texts.append(prompt + " no")
 
-            # Tokenize entire batch (actual_batch_size × 2 texts)
+                                                                 
             batch = tokenizer(all_texts, return_tensors="pt", padding=True,
                             truncation=True, max_length=MAX_LENGTH)
 
             input_ids = batch["input_ids"].to(device)
             attention_mask = batch["attention_mask"].to(device)
 
-            # Single forward pass for all candidates in batch
+                                                             
             outputs = model(input_ids, attention_mask=attention_mask)
             htcore.mark_step()
 
-            # Move to CPU for log-likelihood computation
+                                                        
             logits = outputs.logits.float().cpu()
             input_ids_cpu = batch["input_ids"]
             attn_cpu = batch["attention_mask"]
 
-            # Process each sample in the batch
+                                              
             for idx in range(actual_batch_size):
                 yes_idx = idx * 2
                 no_idx = idx * 2 + 1
                 prompt_len = prompt_lens[idx]
 
-                # Compute log-likelihood for "yes"
+                                                  
                 seq_len_yes = int(attn_cpu[yes_idx].sum().item())
                 ans_len_yes = seq_len_yes - prompt_len
                 if ans_len_yes > 0:
@@ -413,7 +413,7 @@ def evaluate_boolq_accuracy(model, dataset, tokenizer, logger,
                 else:
                     ll_yes = float("-inf")
 
-                # Compute log-likelihood for "no"
+                                                 
                 seq_len_no = int(attn_cpu[no_idx].sum().item())
                 ans_len_no = seq_len_no - prompt_len
                 if ans_len_no > 0:
@@ -425,12 +425,12 @@ def evaluate_boolq_accuracy(model, dataset, tokenizer, logger,
                 else:
                     ll_no = float("-inf")
 
-                # Predict: True if "yes" more likely, False if "no" more likely
+                                                                               
                 predicted = (ll_yes > ll_no)
                 if predicted == answers[idx]:
                     correct += 1
 
-            # Progress logging
+                              
             if rank == 0 and (batch_end % 500 == 0 or batch_end == total):
                 logger.info(f"  [{eval_name}] {batch_end}/{total}: "
                              f"acc={correct/batch_end*100:.2f}%")
@@ -441,7 +441,7 @@ def evaluate_boolq_accuracy(model, dataset, tokenizer, logger,
     if rank == 0:
         logger.info(f"[{eval_name}] Final: {accuracy:.2f}% ({correct}/{total}), time={eval_time:.1f}s")
 
-    # Cleanup
+             
     model.to("cpu")
     free_hpu_memory()
 
@@ -455,7 +455,7 @@ def evaluate_boolq_accuracy(model, dataset, tokenizer, logger,
 
 
 
-# SENSITIVITY COMPUTATION
+                         
 
 
 def compute_pruning_sensitivity(model_name, num_layers, dataset, tokenizer,
@@ -537,7 +537,7 @@ def compute_pruning_sensitivity(model_name, num_layers, dataset, tokenizer,
 
 
 
-# MAIN PIPELINE
+               
 
 
 def main():
@@ -559,7 +559,7 @@ def main():
     world_size = get_world_size()
     set_seed(42)
 
-    # ========== Gaudi Version Selection ==========
+                                                   
     if rank == 0:
         if args.gaudi_version:
             gaudi_version = args.gaudi_version
@@ -605,7 +605,7 @@ def main():
         logger.info(f"Inference: Direct HPU (lazy mode + FP32)")
         logger.info("")
 
-        # Log compute device mapping
+                                    
         logger.info("Compute Device Mapping:")
         logger.info("  Model inference (forward pass)  → HPU (direct, lazy mode)")
         logger.info("  Weight pruning (masking)        → CPU (lightweight)")
@@ -631,7 +631,7 @@ def main():
         logger.info(f"PT_HPU_LAZY_MODE: {os.environ.get('PT_HPU_LAZY_MODE', 'not set')}")
         logger.info("")
 
-    # ========== STEP 1: Select and Load Model ==========
+                                                         
     if rank == 0:
         logger.info("=" * 80)
         logger.info("STEP 1: MODEL SELECTION & LOADING")
@@ -656,7 +656,7 @@ def main():
     if rank == 0:
         logger.info(f"Tokenizer loaded (vocab_size={tokenizer.vocab_size})")
 
-    # ========== STEP 2: Load BoolQ Dataset ==========
+                                                      
     if rank == 0:
         logger.info("=" * 80)
         logger.info("STEP 2: LOADING BOOLQ TRAIN DATASET")
@@ -670,7 +670,7 @@ def main():
             logger.info(f"  Using subset: {min(args.max_samples, len(dataset))} samples")
         logger.info(f"  Official TinyLlama-1.1B score: 57.83 (accuracy)")
 
-    # ========== STEP 3-4: Compute Pruning Sensitivities ==========
+                                                                   
     if rank == 0:
         logger.info("=" * 80)
         logger.info("STEP 3: COMPUTING PRUNING-BASED SENSITIVITIES")
@@ -686,7 +686,7 @@ def main():
     )
     sensitivity_time = time.time() - t0
 
-    # ========== STEP 5: Save Results (rank 0 only) ==========
+                                                              
     if rank == 0:
         logger.info(f"Sensitivity computation complete in {sensitivity_time:.2f}s")
 
@@ -709,12 +709,12 @@ def main():
         samples_tag = f"_n{args.max_samples}" if args.max_samples > 0 else "_full"
         filename_base = f"sens_{model_key}_BoolQ{samples_tag}_pruning_s{int(args.sparsity*100)}_{timestamp}"
 
-        # Save JSON
+                   
         json_path = os.path.join(sens_dir, f"{filename_base}.json")
         with open(json_path, "w") as f:
             json.dump(layer_sensitivities, f, indent=2)
 
-        # Save TXT with metadata
+                                
         txt_path = os.path.join(sens_dir, f"{filename_base}.txt")
         samples_used = min(args.max_samples, len(dataset)) if args.max_samples > 0 else len(dataset)
         with open(txt_path, "w") as f:
@@ -797,7 +797,7 @@ def main():
 
         logger.info(f"Saved: {filename_base}.json / .txt")
 
-        # Also save summary to logs/
+                                    
         summary_log = os.path.join(LOG_DIR, f"boolq_sensitivity_results_{timestamp}.txt")
         with open(summary_log, "w") as f:
             f.write(f"PMPQ BoolQ Sensitivity Results — {timestamp}\n")
@@ -825,7 +825,7 @@ def main():
         logger.info(f"  Cards: {world_size}")
         logger.info(f"  Time:  {sensitivity_time:.2f}s")
 
-    # Cleanup
+             
     if dist.is_initialized():
         dist.destroy_process_group()
 

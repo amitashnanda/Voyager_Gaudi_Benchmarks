@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+                      
 """
 Generate a sensitivity plot for WikiText PMPQ quantization results.
 All layers shown as one line; markers and dotted reference lines are
@@ -12,13 +12,13 @@ import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 import numpy as np
 
-# Configuration
+               
 FOLDER = "/pscratch/sd/a/ananda/SMPQuant/Evaluation/Gaudi2"
 BIT_ALLOCATION = [16, 8, 4]
 DATASETS = ["WikiText"]
 OUTPUT_FOLDER = "/pscratch/sd/a/ananda/SMPQuant/plots"
 
-# Match plot_submodule_sensitivity.py typography/padding style.
+                                                               
 TITLE_FS = 30
 AXIS_LABEL_FS = 30
 XTICK_FS = 25
@@ -28,20 +28,20 @@ LEGEND_TEXT_FS = 25
 TITLE_PAD = 30
 LABEL_PAD = 15
 
-# Distinct colors for 16 / 8 / 4-bit clusters
+                                             
 BIT_COLORS = {
-    16: "#d62728",   # red
-    8:  "#9467bd",   # purple
-    4:  "#1f77b4",   # blue
+    16: "#d62728",        
+    8:  "#9467bd",           
+    4:  "#1f77b4",         
 }
 
-# Create output folder
+                      
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
 
-# ---------------------------------------------------------------------------
-# Parsing helpers
-# ---------------------------------------------------------------------------
+                                                                             
+                 
+                                                                             
 
 def parse_sensitivity_file(filepath):
     """Parse a PMPQ evaluation txt file and extract layer sensitivity values."""
@@ -87,9 +87,9 @@ def find_dataset_file(dataset_name):
     return None, None
 
 
-# ---------------------------------------------------------------------------
-# Shared axis helpers
-# ---------------------------------------------------------------------------
+                                                                             
+                     
+                                                                             
 
 def _set_yaxis(ax, values, padding_frac=0.08, num_ticks=8):
     """Set y-axis limits and ticks spanning the data min→max of *values*."""
@@ -109,7 +109,7 @@ def _place_legend_inside(ax, handles, title=None):
     ax.legend(
         handles=handles,
         loc="lower right",
-        bbox_to_anchor=(0.99, 0.01),  # slightly lower than default lower-right anchor
+        bbox_to_anchor=(0.99, 0.01),                                                  
         prop={'weight': 'bold', 'size': LEGEND_TEXT_FS},
         frameon=True,
         framealpha=0.9,
@@ -120,14 +120,14 @@ def _place_legend_inside(ax, handles, title=None):
         borderaxespad=0.25,
         borderpad=0.7,
         labelspacing=0.7,
-        handlelength=1.8,     # Default is ~2.0; higher = wider symbols/box
-        handletextpad=0.7     # Default is ~0.8; higher = more space after the icon
+        handlelength=1.8,                                                  
+        handletextpad=0.7                                                          
     )
 
 
-# ---------------------------------------------------------------------------
-# Plot 1 — cluster overview (single line, markers & reference lines by cluster)
-# ---------------------------------------------------------------------------
+                                                                             
+                                                                               
+                                                                             
 
 def create_cluster_overview_plot(data, dataset_name, output_path):
     """
@@ -144,17 +144,17 @@ def create_cluster_overview_plot(data, dataset_name, output_path):
     n = len(layers)
     x = np.arange(n)
 
-    # Compact width for Overleaf; taller to give y-axis room
+                                                            
     fig, ax = plt.subplots(figsize=(18, 10))
 
-    # --- grey backbone line ---
+                                
     ax.plot(x, sensitivities, '-', color='#aaaaaa', linewidth=2.5, zorder=1)
 
-    # --- colored markers per layer ---
+                                       
     for xi, s, b in zip(x, sensitivities, bits):
         ax.plot(xi, s, 'o', color=BIT_COLORS[b], markersize=15, zorder=2)
 
-    # --- dotted horizontal reference lines (mean per cluster) ---
+                                                                  
     unique_bits = sorted(set(bit_allocation), reverse=True)
     ref_handles = []
     for bit_val in unique_bits:
@@ -169,8 +169,8 @@ def create_cluster_overview_plot(data, dataset_name, output_path):
                               marker='o', markersize=15, label=f'{bit_val}-bit cluster')
             )
 
-    # --- axes ---
-    # Large fontsizes so text stays legible when scaled down in Overleaf
+                  
+                                                                        
     ax.set_xlabel('TinyLlama-1.1B Layers', fontsize=AXIS_LABEL_FS, fontweight='bold', labelpad=LABEL_PAD)
     ax.set_xticks(x)
     ax.set_xticklabels([f'layer_{l}' for l in layers], rotation=90, ha='center', fontsize=XTICK_FS)
@@ -193,9 +193,9 @@ def create_cluster_overview_plot(data, dataset_name, output_path):
     plt.close(fig)
 
 
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
+                                                                             
+      
+                                                                             
 
 def main():
     print("=" * 70)

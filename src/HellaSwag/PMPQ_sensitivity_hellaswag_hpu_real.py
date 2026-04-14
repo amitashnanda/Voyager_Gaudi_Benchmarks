@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+                      
 """
 PMPQ_sensitivity_hellaswag_hpu_real.py
 
@@ -40,7 +40,7 @@ import torch.nn as nn
 from datasets import load_dataset
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
-# Optional Habana imports (safe fallback on non-HPU systems)
+                                                            
 try:
     import habana_frameworks.torch.hpu as hthpu
     import habana_frameworks.torch.core as htcore
@@ -172,7 +172,7 @@ def evaluate_hellaswag_accuracy(
     model.eval()
     model.to(device)
 
-    # Initialize inference mode on HPU
+                                      
     if HABANA_AVAILABLE and device.type == "hpu":
         try:
             htcore.hpu_set_env()
@@ -197,13 +197,13 @@ def evaluate_hellaswag_accuracy(
     t0 = time.time()
 
     with torch.no_grad():
-        # Process in batches
+                            
         for batch_start in range(0, total, batch_size):
             batch_end = min(batch_start + batch_size, total)
             batch_samples = [samples[i] for i in range(batch_start, batch_end)]
             actual_batch_size = len(batch_samples)
 
-            # Prepare all texts and metadata for this batch
+                                                           
             all_texts = []
             ctx_lens = []
             labels = []
@@ -214,40 +214,40 @@ def evaluate_hellaswag_accuracy(
                 label = int(sample["label"])
                 labels.append(label)
 
-                # Get context length
+                                    
                 ctx_enc = tokenizer(ctx, add_special_tokens=True)
                 ctx_len = len(ctx_enc["input_ids"])
                 ctx_lens.append(ctx_len)
 
-                # Add all 4 candidate endings for this sample
+                                                             
                 for ending in endings:
                     all_texts.append(ctx + " " + ending)
 
-            # Tokenize entire batch (actual_batch_size × 4 texts)
+                                                                 
             batch = tokenizer(all_texts, return_tensors="pt", padding=True,
                             truncation=True, max_length=2048)
 
             input_ids = batch["input_ids"].to(device)
             attention_mask = batch["attention_mask"].to(device)
 
-            # Single forward pass for all candidates in batch
+                                                             
             outputs = model(input_ids, attention_mask=attention_mask)
 
             if use_mark_step and HABANA_AVAILABLE and device.type == "hpu":
                 htcore.mark_step()
 
-            # Move to CPU for log-likelihood computation
+                                                        
             logits = outputs.logits.float().cpu()
             input_ids_cpu = batch["input_ids"]
             attn_cpu = batch["attention_mask"]
 
-            # Process each sample in the batch
+                                              
             for idx in range(actual_batch_size):
                 ctx_len = ctx_lens[idx]
                 best_ll = float("-inf")
                 best_idx = 0
 
-                # Compare all 4 endings for this sample
+                                                       
                 for j in range(4):
                     candidate_idx = idx * 4 + j
                     seq_len = int(attn_cpu[candidate_idx].sum().item())
@@ -256,14 +256,14 @@ def evaluate_hellaswag_accuracy(
                     if ending_len <= 0:
                         continue
 
-                    # Log-likelihood of ending tokens only
+                                                          
                     shift_logits = logits[candidate_idx, ctx_len - 1 : seq_len - 1, :]
                     shift_labels = input_ids_cpu[candidate_idx, ctx_len : seq_len]
 
                     log_probs = torch.nn.functional.log_softmax(shift_logits, dim=-1)
                     token_lps = log_probs.gather(1, shift_labels.unsqueeze(1)).squeeze(1)
 
-                    # Length-normalized average (acc_norm)
+                                                          
                     avg_ll = token_lps.sum().item() / ending_len
 
                     if avg_ll > best_ll:
@@ -314,7 +314,7 @@ def apply_magnitude_pruning_linear(linear: nn.Linear, sparsity: float) -> None:
         return
     if keep >= n:
         return
-    # kth largest magnitude == threshold
+                                        
     thresh = torch.topk(flat.abs(), k=keep, largest=True).values[-1]
     mask = (flat.abs() >= thresh).to(w.dtype)
     linear.weight.data.mul_(mask.view_as(w))
@@ -362,7 +362,7 @@ def main():
     dataset = load_hellaswag_dataset(split=args.split)
     logger.info(f"Loaded HellaSwag {args.split} split: {len(dataset)} samples")
 
-    # Baseline accuracy
+                       
     base_model = AutoModelForCausalLM.from_pretrained(args.model_name_or_path)
     base_model = cast_model_dtype(base_model, args.dtype)
     baseline_acc = evaluate_hellaswag_accuracy(
@@ -372,7 +372,7 @@ def main():
     del base_model
     free_hpu_memory()
 
-    # Determine candidate modules (from a fresh CPU model)
+                                                          
     probe_model = AutoModelForCausalLM.from_pretrained(args.model_name_or_path)
     candidates = list_candidate_linear_modules(probe_model)
     del probe_model
@@ -393,7 +393,7 @@ def main():
         submod = get_module_by_name(model, mod_name)
         assert isinstance(submod, nn.Linear), f"Expected nn.Linear at {mod_name}, got {type(submod)}"
 
-        # Prune on CPU before moving to device
+                                              
         model.to("cpu")
         apply_magnitude_pruning_linear(submod, args.sparsity)
 
@@ -402,8 +402,8 @@ def main():
             desc=f"Pruned {mod_name}", max_samples=args.max_samples, batch_size=args.batch_size
         )
 
-        # Sensitivity = baseline_acc - pruned_acc
-        # Positive sensitivity = accuracy dropped → layer is important
+                                                 
+                                                                      
         delta = float(baseline_acc - acc)
         sensitivities[mod_name] = delta
         logger.info(f"  Sensitivity[{mod_name}] = {delta:+.6f}")
@@ -414,7 +414,7 @@ def main():
     dt_all = time.time() - t_all
     logger.info(f"Completed sensitivities in {dt_all:.1f}s")
 
-    # Save results
+                  
     out_dir.mkdir(parents=True, exist_ok=True)
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
 

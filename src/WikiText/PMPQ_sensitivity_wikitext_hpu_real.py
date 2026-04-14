@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+                      
 """
 Phase1_submodule_sensitivity.py
 
@@ -35,7 +35,7 @@ import torch.nn as nn
 from datasets import load_dataset
 from transformers import AutoTokenizer, AutoModelForCausalLM, default_data_collator
 
-# Optional Habana imports (safe fallback on non-HPU systems)
+                                                            
 try:
     import habana_frameworks.torch.hpu as hthpu
     import habana_frameworks.torch.core as htcore
@@ -104,7 +104,7 @@ def free_hpu_memory() -> None:
 
 
 def prepare_wikitext_dataset(tokenizer, split: str, block_size: int) -> torch.utils.data.Dataset:
-    # Prefer raw version (standard for perplexity scripts)
+                                                          
     try:
         raw_data = load_dataset("wikitext", "wikitext-2-raw-v1", split=split)
     except Exception:
@@ -168,7 +168,7 @@ def evaluate_perplexity(
     model.eval()
     model.to(device)
 
-    # Initialize inference mode (optional; safe even without quant scales)
+                                                                          
     if HABANA_AVAILABLE and device.type == "hpu":
         try:
             htcore.hpu_set_env()
@@ -187,7 +187,7 @@ def evaluate_perplexity(
     with torch.no_grad():
         for batch in dataloader:
             batch = {k: v.to(device) for k, v in batch.items()}
-            # labels present -> model returns loss
+                                                  
             out = model(**batch)
             loss = out.loss
             losses.append(float(loss.detach().cpu()))
@@ -236,7 +236,7 @@ def apply_magnitude_pruning_linear(linear: nn.Linear, sparsity: float) -> None:
         return
     if keep >= n:
         return
-    # kth largest magnitude == threshold
+                                        
     thresh = torch.topk(flat.abs(), k=keep, largest=True).values[-1]
     mask = (flat.abs() >= thresh).to(w.dtype)
     linear.weight.data.mul_(mask.view_as(w))
@@ -277,7 +277,7 @@ def main():
     max_samples = args.max_eval_samples if args.max_eval_samples and args.max_eval_samples > 0 else None
     dataloader = build_dataloader(dataset, args.per_device_eval_batch_size, max_samples=max_samples)
 
-    # Baseline
+              
     base_model = AutoModelForCausalLM.from_pretrained(args.model_name_or_path)
     base_model = cast_model_dtype(base_model, args.dtype)
     baseline_ppl = evaluate_perplexity(
@@ -286,7 +286,7 @@ def main():
     del base_model
     free_hpu_memory()
 
-    # Determine candidate modules (from a fresh CPU model)
+                                                          
     probe_model = AutoModelForCausalLM.from_pretrained(args.model_name_or_path)
     candidates = list_candidate_linear_modules(probe_model)
     del probe_model
@@ -307,7 +307,7 @@ def main():
         submod = get_module_by_name(model, mod_name)
         assert isinstance(submod, nn.Linear), f"Expected nn.Linear at {mod_name}, got {type(submod)}"
 
-        # Prune on CPU before moving to device
+                                              
         model.to("cpu")
         apply_magnitude_pruning_linear(submod, args.sparsity)
 
@@ -324,7 +324,7 @@ def main():
     dt_all = time.time() - t_all
     logger.info(f"Completed sensitivities in {dt_all:.1f}s")
 
-    # Save results
+                  
     out_dir.mkdir(parents=True, exist_ok=True)
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     out_json = out_dir / f"submodule_sens_{Path(args.model_name_or_path).name}_{args.split}_pruning_s{int(args.sparsity*100)}_{ts}.json"
@@ -352,11 +352,11 @@ if __name__ == "__main__":
     main()
 
 
-# PT_HPU_LAZY_MODE=1 python Phase1_submodule_sensitivity.py \
-#   --model_name_or_path TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T \
-#   --split validation \
-#   --sparsity 0.30 \
-#   --dtype fp32 \
-#   --block_size 512 \
-#   --per_device_eval_batch_size 4 \
-#   --use_mark_step
+                                                             
+                                                                              
+                        
+                     
+                  
+                      
+                                    
+                   

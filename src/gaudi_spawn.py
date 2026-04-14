@@ -1,17 +1,17 @@
-# coding=utf-8
-# Copyright 2022 The HuggingFace Team. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+              
+                                                           
+ 
+                                                                 
+                                                                  
+                                         
+ 
+                                                
+ 
+                                                                     
+                                                                   
+                                                                          
+                                                                     
+                                
 """
 A simple launcher script for distributed training on HPUs.
 
@@ -51,14 +51,14 @@ def parse_args():
         )
     )
 
-    # Optional arguments for the launch helper
+                                              
     parser.add_argument("--world_size", type=int, default=1, help="Number of HPUs to use (1 or 8)")
     parser.add_argument("--hostfile", type=str, default=None, help="Path to the file where hosts are specified.")
     parser.add_argument("--use_mpi", action="store_true", help="Use MPI for distributed training")
     parser.add_argument("--use_deepspeed", action="store_true", help="Use DeepSpeed for distributed training")
     parser.add_argument("--master_port", type=int, default=29500, help="Master port used by DeepSpeed and MPI")
 
-    # positional
+                
     parser.add_argument(
         "training_script",
         type=str,
@@ -70,7 +70,7 @@ def parse_args():
         ),
     )
 
-    # rest from the training program
+                                    
     parser.add_argument("training_script_args", nargs=REMAINDER)
 
     return parser.parse_args()
@@ -88,9 +88,9 @@ def main():
                 " git+https://github.com/HabanaAI/DeepSpeed.git@1.22.0`."
             )
 
-    # Patch sys.argv
+                    
     sys.argv = [args.training_script] + args.training_script_args
-    # Handle the case where arguments contain whitespaces
+                                                         
     argv = ['"{}\"'.format(arg) if " " in arg and arg[0] != '"' and arg[-1] != '"' else arg for arg in sys.argv]
     command_list = [" ".join(argv)]
 

@@ -44,7 +44,7 @@ Author: Mixed-Precision Quantization Team
 Date: 2025
 """
 
-# ENVIRONMENT SETUP - BEFORE ANY IMPORTS
+                                        
 
 
 import os
@@ -102,7 +102,7 @@ LOG_DIR_BASE = "/voyager/ceph/users/ananda2/Quantization/logs"
 os.makedirs(LOG_DIR_BASE, exist_ok=True)
 
 
-# LOGGING SETUP
+               
 
 
 def setup_logging(rank=0, log_dir=None):
@@ -136,7 +136,7 @@ def setup_logging(rank=0, log_dir=None):
 
 
 
-# MODEL CONFIGURATIONS
+                      
 
 
 TINYLLAMA_MODELS = {
@@ -149,7 +149,7 @@ TINYLLAMA_MODELS = {
 }
 
 
-# UTILITY FUNCTIONS
+                   
 
 
 def set_seed(seed=42):
@@ -185,8 +185,8 @@ def get_hpu_memory_info():
     try:
         import habana_frameworks.torch.hpu as hthpu
         if hthpu.is_available():
-            allocated = hthpu.memory_allocated() / (1024 ** 2)  # MB
-            max_allocated = hthpu.max_memory_allocated() / (1024 ** 2)  # MB
+            allocated = hthpu.memory_allocated() / (1024 ** 2)      
+            max_allocated = hthpu.max_memory_allocated() / (1024 ** 2)      
             return {
                 "allocated_mb": allocated,
                 "max_allocated_mb": max_allocated,
@@ -271,7 +271,7 @@ def select_model(logger):
 
 
 
-# PRUNING FUNCTIONS
+                   
 
 
 def apply_magnitude_pruning_to_layer(layer, sparsity_level):
@@ -291,7 +291,7 @@ def apply_magnitude_pruning_to_layer(layer, sparsity_level):
     Runs on CPU — lightweight weight masking (no matrix multiply).
     """
     with torch.no_grad():
-        # Collect only nn.Linear weight tensors (skip biases, LayerNorm, etc.)
+                                                                              
         linear_weights = []
         for module in layer.modules():
             if isinstance(module, nn.Linear):
@@ -300,23 +300,23 @@ def apply_magnitude_pruning_to_layer(layer, sparsity_level):
         if not linear_weights:
             return
 
-        # Build single magnitude vector across all Linear weights in this layer
+                                                                               
         all_magnitudes = torch.cat([w.data.abs().view(-1) for w in linear_weights])
         k = int(all_magnitudes.numel() * (1 - sparsity_level))
         if k == 0:
             return
 
-        # Compute one unified threshold for the entire layer
+                                                            
         threshold = torch.topk(all_magnitudes, k, largest=True)[0][-1]
 
-        # Apply mask back to each weight tensor
+                                               
         for w in linear_weights:
             mask = (w.data.abs() >= threshold).float()
             w.data *= mask
 
 
 
-# HELLASWAG DATASET
+                   
 
 
 def preprocess_hellaswag_text(text):
@@ -341,7 +341,7 @@ def load_hellaswag_dataset(split="train"):
 
 
 
-# HELLASWAG ACCURACY EVALUATION (HPU — Direct Inference)
+                                                        
 
 
 def evaluate_hellaswag_accuracy(model, dataset, tokenizer, logger,
@@ -383,13 +383,13 @@ def evaluate_hellaswag_accuracy(model, dataset, tokenizer, logger,
     t0 = time.time()
 
     with torch.no_grad():
-        # Process in batches
+                            
         for batch_start in range(0, total, batch_size):
             batch_end = min(batch_start + batch_size, total)
             batch_samples = [samples[i] for i in range(batch_start, batch_end)]
             actual_batch_size = len(batch_samples)
 
-            # Prepare all texts and metadata for this batch
+                                                           
             all_texts = []
             ctx_lens = []
             labels = []
@@ -400,38 +400,38 @@ def evaluate_hellaswag_accuracy(model, dataset, tokenizer, logger,
                 label = int(sample["label"])
                 labels.append(label)
 
-                # Get context length
+                                    
                 ctx_enc = tokenizer(ctx, add_special_tokens=True)
                 ctx_len = len(ctx_enc["input_ids"])
                 ctx_lens.append(ctx_len)
 
-                # Add all 4 candidate endings for this sample
+                                                             
                 for ending in endings:
                     all_texts.append(ctx + " " + ending)
 
-            # Tokenize entire batch (actual_batch_size × 4 texts)
+                                                                 
             batch = tokenizer(all_texts, return_tensors="pt", padding=True,
                             truncation=True, max_length=2048)
 
             input_ids = batch["input_ids"].to(device)
             attention_mask = batch["attention_mask"].to(device)
 
-            # Single forward pass for all candidates in batch
+                                                             
             outputs = model(input_ids, attention_mask=attention_mask)
             htcore.mark_step()
 
-            # Move to CPU for log-likelihood computation
+                                                        
             logits = outputs.logits.float().cpu()
             input_ids_cpu = batch["input_ids"]
             attn_cpu = batch["attention_mask"]
 
-            # Process each sample in the batch
+                                              
             for idx in range(actual_batch_size):
                 ctx_len = ctx_lens[idx]
                 best_ll = float("-inf")
                 best_idx = 0
 
-                # Compare all 4 endings for this sample
+                                                       
                 for j in range(4):
                     candidate_idx = idx * 4 + j
                     seq_len = int(attn_cpu[candidate_idx].sum().item())
@@ -440,14 +440,14 @@ def evaluate_hellaswag_accuracy(model, dataset, tokenizer, logger,
                     if ending_len <= 0:
                         continue
 
-                    # Log-likelihood of ending tokens only
+                                                          
                     shift_logits = logits[candidate_idx, ctx_len - 1 : seq_len - 1, :]
                     shift_labels = input_ids_cpu[candidate_idx, ctx_len : seq_len]
 
                     log_probs = torch.nn.functional.log_softmax(shift_logits, dim=-1)
                     token_lps = log_probs.gather(1, shift_labels.unsqueeze(1)).squeeze(1)
 
-                    # Length-normalized average (acc_norm)
+                                                          
                     avg_ll = token_lps.sum().item() / ending_len
 
                     if avg_ll > best_ll:
@@ -457,7 +457,7 @@ def evaluate_hellaswag_accuracy(model, dataset, tokenizer, logger,
                 if best_idx == labels[idx]:
                     correct += 1
 
-            # Progress logging
+                              
             if rank == 0 and (batch_end % 500 == 0 or batch_end == total):
                 logger.info(f"  [{eval_name}] {batch_end}/{total}: "
                              f"acc={correct/batch_end*100:.2f}%")
@@ -468,7 +468,7 @@ def evaluate_hellaswag_accuracy(model, dataset, tokenizer, logger,
     if rank == 0:
         logger.info(f"[{eval_name}] Final: {accuracy:.2f}% ({correct}/{total}), time={eval_time:.1f}s")
 
-    # Cleanup — move model back to CPU, free HPU memory
+                                                       
     model.to("cpu")
     free_hpu_memory()
 
@@ -482,7 +482,7 @@ def evaluate_hellaswag_accuracy(model, dataset, tokenizer, logger,
 
 
 
-# SENSITIVITY COMPUTATION
+                         
 
 
 def compute_pruning_sensitivity(model_name, num_layers, dataset, tokenizer,
@@ -549,7 +549,7 @@ def compute_pruning_sensitivity(model_name, num_layers, dataset, tokenizer,
             eval_name=f"Layer {layer_idx} Pruned", max_samples=max_samples, batch_size=batch_size
         )
 
-        sensitivity = baseline_acc - pruned_acc  # Positive = more sensitive
+        sensitivity = baseline_acc - pruned_acc                             
         layer_sensitivities[f"layer_{layer_idx}"] = float(sensitivity)
 
         del pruned_model
@@ -569,7 +569,7 @@ def compute_pruning_sensitivity(model_name, num_layers, dataset, tokenizer,
 
 
 
-# MAIN PIPELINE
+               
 
 
 def main():
@@ -591,7 +591,7 @@ def main():
     world_size = get_world_size()
     set_seed(42)
 
-    # ========== Gaudi Version Selection ==========
+                                                   
     if rank == 0:
         if args.gaudi_version:
             gaudi_version = args.gaudi_version
@@ -637,7 +637,7 @@ def main():
         logger.info(f"Inference: Direct HPU (lazy mode + FP32)")
         logger.info("")
 
-        # Log compute device mapping
+                                    
         logger.info("Compute Device Mapping:")
         logger.info("  Model inference (forward pass)  → HPU (direct, lazy mode)")
         logger.info("  Weight pruning (masking)        → CPU (lightweight)")
@@ -646,11 +646,11 @@ def main():
         logger.info("  I/O, logging, result saving     → CPU")
         logger.info("")
 
-        # Log HPU status
+                        
         log_hpu_status(logger)
         logger.info("")
 
-        # Log environment
+                         
         logger.info(f"PyTorch:        {torch.__version__}")
         try:
             import optimum.habana
@@ -665,7 +665,7 @@ def main():
         logger.info(f"PT_HPU_LAZY_MODE: {os.environ.get('PT_HPU_LAZY_MODE', 'not set')}")
         logger.info("")
 
-    # ========== STEP 1: Select and Load Model ==========
+                                                         
     if rank == 0:
         logger.info("=" * 80)
         logger.info("STEP 1: MODEL SELECTION & LOADING")
@@ -690,7 +690,7 @@ def main():
     if rank == 0:
         logger.info(f"Tokenizer loaded (vocab_size={tokenizer.vocab_size})")
 
-    # ========== STEP 2: Load HellaSwag Dataset ==========
+                                                          
     if rank == 0:
         logger.info("=" * 80)
         logger.info("STEP 2: LOADING HELLASWAG TRAIN DATASET")
@@ -704,7 +704,7 @@ def main():
             logger.info(f"  Using subset: {min(args.max_samples, len(dataset))} samples")
         logger.info(f"  Official TinyLlama-1.1B score: 59.20 (acc_norm)")
 
-    # ========== STEP 3-4: Compute Pruning Sensitivities ==========
+                                                                   
     if rank == 0:
         logger.info("=" * 80)
         logger.info("STEP 3: COMPUTING PRUNING-BASED SENSITIVITIES")
@@ -720,7 +720,7 @@ def main():
     )
     sensitivity_time = time.time() - t0
 
-    # ========== STEP 5: Save Results (rank 0 only) ==========
+                                                              
     if rank == 0:
         logger.info(f"Sensitivity computation complete in {sensitivity_time:.2f}s")
 
@@ -730,7 +730,7 @@ def main():
         for layer_name in sorted(layer_sensitivities, key=lambda x: int(x.split("_")[1])):
             logger.info(f"  {layer_name}: {layer_sensitivities[layer_name]:.4f}")
 
-        # Log peak HPU memory
+                             
         mem = get_hpu_memory_info()
         if mem:
             logger.info(f"HPU peak memory usage: {mem['max_allocated_mb']:.1f} MB")
@@ -744,12 +744,12 @@ def main():
         samples_tag = f"_n{args.max_samples}" if args.max_samples > 0 else "_full"
         filename_base = f"sens_{model_key}_HellaSwag{samples_tag}_pruning_s{int(args.sparsity*100)}_{timestamp}"
 
-        # Save JSON
+                   
         json_path = os.path.join(sens_dir, f"{filename_base}.json")
         with open(json_path, "w") as f:
             json.dump(layer_sensitivities, f, indent=2)
 
-        # Save TXT with metadata
+                                
         txt_path = os.path.join(sens_dir, f"{filename_base}.txt")
         with open(txt_path, "w") as f:
             f.write("=" * 80 + "\n")
@@ -832,7 +832,7 @@ def main():
 
         logger.info(f"Saved: {filename_base}.json / .txt")
 
-        # Also copy results summary to logs/
+                                            
         summary_log = os.path.join(LOG_DIR, f"hellaswag_sensitivity_results_{timestamp}.txt")
         with open(summary_log, "w") as f:
             f.write(f"PMPQ HellaSwag Sensitivity Results — {timestamp}\n")
@@ -860,7 +860,7 @@ def main():
         logger.info(f"  Cards: {world_size}")
         logger.info(f"  Time:  {sensitivity_time:.2f}s")
 
-    # Cleanup
+             
     if dist.is_initialized():
         dist.destroy_process_group()
 

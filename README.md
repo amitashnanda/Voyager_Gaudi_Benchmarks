@@ -27,8 +27,9 @@ Voyager_Gaudi_Benchmarks/
 │   ├── WikiText/                 # WikiText-2 evaluation scripts
 │   ├── HellaSwag/                # HellaSwag evaluation scripts
 │   ├── BoolQ/                    # BoolQ evaluation scripts
-│   ├── plot_gaudi2_eval_clusters.py    # Visualization for cluster analysis
-│   └── plot_submodule_sensitivity.py   # Submodule sensitivity plots
+│   ├── plot_code/plot_gaudi2_eval_clusters.py    # Visualization for cluster analysis
+│   ├── plot_code/plot_submodule_sensitivity.py   # Submodule sensitivity plots
+│   └── gaudi_spawn.py                            # gaudi spawn script
 │
 ├── Sensitivities/                # Sensitivity analysis results
 │   ├── A100/                     # A100 sensitivity scores

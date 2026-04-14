@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+                      
 """
 PMPQ_evaluation_boolq_hpu_real.py
 
@@ -44,8 +44,8 @@ import habana_frameworks.torch.core as htcore
 from neural_compressor.torch.quantization import FP8Config, prepare, convert, finalize_calibration
 
 
-# BoolQ-specific constants
-MAX_LENGTH = 512  # Appropriate for BoolQ's shorter passages
+                          
+MAX_LENGTH = 512                                            
 
 LLAMA_MLP_SUFFIXES = ("mlp.gate_proj", "mlp.up_proj", "mlp.down_proj")
 LLAMA_ATTN_O_SUFFIX = ("self_attn.o_proj",)
@@ -108,7 +108,7 @@ def get_device() -> torch.device:
 
 
 def hpu_set_env_safe() -> None:
-    # Newer stacks warn that hpu_set_env is deprecated in favor of hpu_inference_set_env.
+                                                                                         
     if hasattr(htcore, "hpu_inference_set_env"):
         htcore.hpu_inference_set_env()
     else:
@@ -116,7 +116,7 @@ def hpu_set_env_safe() -> None:
 
 
 def hpu_infer_init_safe(model: nn.Module) -> None:
-    # Prefer hpu_inference_initialize; fall back to hpu_initialize if needed.
+                                                                             
     if hasattr(htcore, "hpu_inference_initialize"):
         htcore.hpu_inference_initialize(model=model, mark_scales=True, mark_non_scales=False)
     else:
@@ -166,7 +166,7 @@ def calibration_forward_boolq(
     model.eval()
     model.to(device)
 
-    # Calibration runs on prepare()'d model, so HPU initialization IS needed
+                                                                            
     if device.type == "hpu":
         hpu_set_env_safe()
         hpu_infer_init_safe(model)
@@ -179,21 +179,21 @@ def calibration_forward_boolq(
             end_idx = min(start_idx + batch_size, num_samples)
             batch_samples = dataset.select(range(start_idx, end_idx))
 
-            # Process each sample in the batch
+                                              
             for sample in batch_samples:
                 passage = sample["passage"]
                 question = sample["question"]
 
-                # Format prompt with proper prefix
+                                                  
                 prompt = f"Passage: {passage}\nQuestion: {question}\nAnswer:"
 
-                # Tokenize both yes and no continuations
+                                                        
                 for answer in [" yes", " no"]:
                     full_text = prompt + answer
                     inputs = tokenizer(full_text, return_tensors="pt", truncation=True, max_length=MAX_LENGTH)
                     input_ids = inputs["input_ids"].to(device)
 
-                    # Forward pass for calibration
+                                                  
                     _ = model(input_ids=input_ids)
 
                     if use_mark_step and device.type == "hpu":
@@ -240,7 +240,7 @@ def evaluate_boolq_accuracy(
     model.eval()
     model.to(device)
 
-    # HPU initialization - only if explicitly requested (e.g., for FP8 models)
+                                                                              
     if use_hpu_init and device.type == "hpu":
         hpu_set_env_safe()
         hpu_infer_init_safe(model)
@@ -259,13 +259,13 @@ def evaluate_boolq_accuracy(
     t0 = time.time()
 
     with torch.no_grad():
-        # Process in batches
+                            
         for batch_start in range(0, total, batch_size):
             batch_end = min(batch_start + batch_size, total)
             batch_samples = [samples[i] for i in range(batch_start, batch_end)]
             actual_batch_size = len(batch_samples)
 
-            # Prepare all texts and metadata for this batch
+                                                           
             all_texts = []
             prompt_lens = []
             answers = []
@@ -273,46 +273,46 @@ def evaluate_boolq_accuracy(
             for sample in batch_samples:
                 passage = sample["passage"]
                 question = sample["question"]
-                answer = sample["answer"]  # True or False
+                answer = sample["answer"]                 
                 answers.append(answer)
 
-                # Format prompt with proper prefix
+                                                  
                 prompt = f"Passage: {passage}\nQuestion: {question}\nAnswer:"
 
-                # Get prompt length
+                                   
                 prompt_enc = tokenizer(prompt, add_special_tokens=True)
                 prompt_len = len(prompt_enc["input_ids"])
                 prompt_lens.append(prompt_len)
 
-                # Add both candidates for this sample (lowercase)
+                                                                 
                 all_texts.append(prompt + " yes")
                 all_texts.append(prompt + " no")
 
-            # Tokenize entire batch (actual_batch_size × 2 texts)
+                                                                 
             batch = tokenizer(all_texts, return_tensors="pt", padding=True,
                             truncation=True, max_length=MAX_LENGTH)
 
             input_ids = batch["input_ids"].to(device)
             attention_mask = batch["attention_mask"].to(device)
 
-            # Single forward pass for all candidates in batch
+                                                             
             outputs = model(input_ids, attention_mask=attention_mask)
 
             if use_mark_step and device.type == "hpu":
                 htcore.mark_step()
 
-            # Move to CPU for log-likelihood computation
+                                                        
             logits = outputs.logits.float().cpu()
             input_ids_cpu = batch["input_ids"]
             attn_cpu = batch["attention_mask"]
 
-            # Process each sample in the batch
+                                              
             for idx in range(actual_batch_size):
                 yes_idx = idx * 2
                 no_idx = idx * 2 + 1
                 prompt_len = prompt_lens[idx]
 
-                # Compute log-likelihood for "yes"
+                                                  
                 seq_len_yes = int(attn_cpu[yes_idx].sum().item())
                 ans_len_yes = seq_len_yes - prompt_len
                 if ans_len_yes > 0:
@@ -324,7 +324,7 @@ def evaluate_boolq_accuracy(
                 else:
                     ll_yes = float("-inf")
 
-                # Compute log-likelihood for "no"
+                                                 
                 seq_len_no = int(attn_cpu[no_idx].sum().item())
                 ans_len_no = seq_len_no - prompt_len
                 if ans_len_no > 0:
@@ -336,19 +336,19 @@ def evaluate_boolq_accuracy(
                 else:
                     ll_no = float("-inf")
 
-                # Predict: True if "yes" more likely, False if "no" more likely
+                                                                               
                 predicted = (ll_yes > ll_no)
                 if predicted == answers[idx]:
                     correct += 1
 
-            # Progress logging - every ~100 samples (more frequent for real-time feedback)
+                                                                                          
             if (batch_end % 128 == 0 or batch_end == total):
                 current_acc = correct / batch_end * 100.0
                 elapsed = time.time() - t0
                 samples_per_sec = batch_end / elapsed if elapsed > 0 else 0
                 logger.info(f"  [{batch_end}/{total}] acc={current_acc:.2f}% | "
                            f"{samples_per_sec:.1f} samples/s | {elapsed:.1f}s elapsed")
-                # Flush to ensure immediate display
+                                                   
                 import sys
                 sys.stdout.flush()
                 sys.stderr.flush()
@@ -421,7 +421,7 @@ def select_fp8_modules(
 
     if max_fp8_modules and max_fp8_modules > 0 and len(fp8_names) > max_fp8_modules:
         fp8_pairs = [(names[i], float(vals[i])) for i in range(len(names)) if fp8_mask[i]]
-        fp8_pairs.sort(key=lambda kv: kv[1])  # least sensitive first
+        fp8_pairs.sort(key=lambda kv: kv[1])                         
         fp8_names = [n for (n, _) in fp8_pairs[:max_fp8_modules]]
         meta["max_fp8_modules_applied"] = int(max_fp8_modules)
 
@@ -435,7 +435,7 @@ def infer_num_layers(model_name_or_path: str) -> int:
     cfg = AutoConfig.from_pretrained(model_name_or_path)
     if hasattr(cfg, "num_hidden_layers") and cfg.num_hidden_layers is not None:
         return int(cfg.num_hidden_layers)
-    # fallback for other configs
+                                
     for k in ("n_layer", "num_layers"):
         if hasattr(cfg, k):
             return int(getattr(cfg, k))
@@ -515,7 +515,7 @@ def estimate_mixed_precision_size_bytes(
             if mod.bias is not None:
                 fp8_bias_params += int(mod.bias.numel())
 
-    # Treat whole model as hp_dtype, then replace FP8 weights footprint
+                                                                       
     base_hp_bytes = total_params * hp_b
     mixed_bytes_est = base_hp_bytes - (fp8_weight_params * hp_b) + (fp8_weight_params * 1)
 
@@ -597,7 +597,7 @@ def main():
     ap.add_argument("--use_qdq", action="store_true")
     ap.add_argument("--fake_quant", action="store_true")
 
-    # BoolQ-specific defaults matching sensitivity script
+                                                         
     ap.add_argument("--calib_split", type=str, default="train", choices=["train", "validation"],
                     help="BoolQ split for calibration (default: train)")
     ap.add_argument("--eval_split", type=str, default="validation", choices=["train", "validation"],
@@ -640,24 +640,24 @@ def main():
     logger.info(f"Run mode: {args.run_mode}")
     logger.info(f"MAX_LENGTH: {MAX_LENGTH} (BoolQ-specific)")
 
-    # Load sensitivities and candidates
+                                       
     sens_path = Path(args.sensitivity_json)
     sens = load_sensitivities(sens_path)
     candidates = filter_candidates(sens, args.target_family)
 
-    # Determine num layers for logging
+                                      
     num_layers = infer_num_layers(args.model_name_or_path)
     logger.info(f"Model: {args.model_name_or_path} | num_layers={num_layers} | target_family={args.target_family}")
     logger.info(f"Candidates: {len(candidates)} (filtered submodules)")
 
-    # Paths
+           
     dump_stats_path = str((run_dir / "inc_output" / "measure").as_posix())
     measure_cfg_path = run_dir / "fp8_measure.json"
     quant_cfg_path = run_dir / "fp8_quantize.json"
     measure_meta_path = run_dir / "measure_summary.json"
     selection_meta_path = run_dir / "selection_meta.json"
 
-    # Reuse configs if requested (recommended for quantize-only to avoid mismatched allowlists)
+                                                                                               
     fp8_modules: List[str] = []
     blocklist_names = list(DEFAULT_BLOCKLIST)
     selection_meta: Dict = {}
@@ -677,7 +677,7 @@ def main():
             max_fp8_modules=args.max_fp8_modules,
         )
 
-    # Build BF16/FP8 mappings for logs
+                                      
     layer_precision_map, layer_fp8_detail = build_layer_precision_maps(fp8_modules, num_layers)
 
     fp8_layers = [int(k) for k, v in layer_precision_map.items() if v == "FP8"]
@@ -693,7 +693,7 @@ def main():
     logger.info(f"FP8 layers (any selected submodule): {len(fp8_layers)} -> {fp8_layers}")
     logger.info(f"BF16 layers (no selected submodule): {len(bf16_layers)} -> {bf16_layers}")
 
-    # Detailed per-layer breakdown (compact)
+                                            
     for i in range(num_layers):
         mods = layer_fp8_detail.get(str(i), [])
         if mods:
@@ -701,10 +701,10 @@ def main():
         else:
             logger.info(f"Layer {i:02d}: BF16 (no FP8 submodules)")
 
-    # Save selection meta
+                         
     write_json(selection_meta_path, selection_meta)
 
-    # Load tokenizer and datasets
+                                 
     tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
@@ -720,15 +720,15 @@ def main():
     logger.info(f"Evaluation samples: {eval_samples} (from {args.eval_split} split, full={len(eval_dataset)})")
     logger.info(f"Batch size: {args.batch_size} (matching sensitivity script)")
 
-    # Size estimates (computed from a fresh CPU model and module list)
+                                                                      
     size_est = estimate_mixed_precision_size_bytes(args.model_name_or_path, args.hp_dtype, fp8_modules)
     logger.info(f"Size estimate (FP32 baseline): {size_est['fp32_model_size_mb_est']:.2f} MB")
     logger.info(f"Size estimate (all {args.hp_dtype}): {size_est['hp_dtype_model_size_mb_est']:.2f} MB")
     logger.info(f"Size estimate (mixed {args.hp_dtype}+FP8 weights): {size_est['mixed_model_size_mb_est']:.2f} MB")
     logger.info(f"Estimated compression ratio (FP32 -> mixed): {size_est['compression_ratio_fp32_to_mixed_est']:.3f}x")
 
-    # Baseline evaluation - only needed for quantize/both modes
-    # (MEASURE phase only does calibration, no accuracy evaluation)
+                                                               
+                                                                   
     acc_baseline = None
     t_baseline = None
     throughput_baseline = None
@@ -756,7 +756,7 @@ def main():
     else:
         logger.info("=== Skipping Baseline Evaluation (MEASURE phase only does calibration) ===")
 
-    # Build configs (or reuse)
+                              
     measure_cfg = build_measure_cfg(
         dump_stats_path=dump_stats_path,
         allowlist_names=fp8_modules,
@@ -785,7 +785,7 @@ def main():
         scale_format=args.scale_format,
     )
 
-    # Always write current configs for traceability
+                                                   
     write_json(measure_cfg_path, measure_cfg)
     write_json(quant_cfg_path, quant_cfg)
 
@@ -808,7 +808,7 @@ def main():
         finalize_calibration(model_m)
         logger.info(f"[MEASURE] calibration_time_s={calib_time:.3f} dump_stats_path={dump_stats_path}")
 
-        # persist MEASURE metadata
+                                  
         write_json(measure_meta_path, {
             "timestamp": ts,
             "calib_time_s": float(calib_time),
@@ -825,7 +825,7 @@ def main():
         os.environ.setdefault("PT_HPU_WEIGHT_SHARING", "0")
         logger.info(f"PT_HPU_WEIGHT_SHARING={os.environ.get('PT_HPU_WEIGHT_SHARING')}")
 
-        # If quantize-only, load measure metadata if available
+                                                              
         if calib_time is None and measure_meta_path.exists():
             try:
                 mmeta = read_json(measure_meta_path)
@@ -840,12 +840,12 @@ def main():
         cfg_q = FP8Config.from_json_file(str(quant_cfg_path))
         model_q = convert(model_q, cfg_q)
 
-        # state_dict footprint of quantized model (CPU-side)
+                                                            
         quant_sd_bytes, quant_sd_by_dtype = tensor_bytes_from_state_dict(model_q)
 
         acc_fp8, t_fp8 = evaluate_boolq_accuracy(
             model_q, eval_dataset, tokenizer, device, args.batch_size, args.use_mark_step, logger,
-            use_hpu_init=True,  # FP8 convert()ed model may need HPU initialization
+            use_hpu_init=True,                                                     
             max_samples=args.eval_max_samples
         )
 
@@ -857,11 +857,11 @@ def main():
         del model_q
         free_hpu_memory()
 
-    # Final metrics
+                   
     acc_delta = (acc_fp8 - acc_baseline) if (acc_fp8 is not None and acc_baseline is not None) else None
     acc_delta_pct = (acc_delta / acc_baseline * 100.0) if (acc_delta is not None and acc_baseline and acc_baseline > 0) else None
 
-    # Summary JSON
+                  
     summary = {
         "timestamp": ts,
         "run_dir": str(run_dir),
@@ -909,12 +909,12 @@ def main():
         "size_estimates": size_est,
         "baseline_state_dict_mb": float(mb(base_sd_bytes)) if base_sd_bytes is not None else None,
         "fp8_state_dict_mb": float(mb(quant_sd_bytes)) if quant_sd_bytes is not None else None,
-        "official_score": 57.83,  # TinyLlama-1.1B-3T official BoolQ score
+        "official_score": 57.83,                                          
         "warning": "Verify patched modules via LOG_LEVEL_INC=1 output: search for 'Patched modules'."
     }
     write_json(run_dir / "run_summary.json", summary)
 
-    # Print a compact final report to logs
+                                          
     logger.info("=== SUMMARY ===")
     if acc_baseline is not None:
         logger.info(f"Baseline ({args.baseline_dtype}) Accuracy: {acc_baseline:.2f}%")
@@ -935,16 +935,16 @@ if __name__ == "__main__":
     main()
 
 
-# Example usage (MEASURE phase):
-# export LOG_LEVEL_INC=1
-# PT_HPU_LAZY_MODE=1 python PMPQ_evaluation_boolq_hpu_real.py --sensitivity_json Sensitivities_submodule/submodule_sens_TinyLlama-1.1B-intermediate-step-1431k-3T_BoolQ_train_pruning_s30_n2000_20260330_123456.json --run_mode measure --target_family mlp_only --clustering percentile --baseline_dtype fp32 --hp_dtype bf16 --fp8_format E4M3 --scale_method maxabs_hw_opt_weight --calib_max_samples 512 --batch_size 64 --use_mark_step
+                                
+                        
+                                                                                                                                                                                                                                                                                                                                                                                                                                            
 
-# Example usage (QUANTIZE phase):
-# export LOG_LEVEL_INC=1
-# export PT_HPU_WEIGHT_SHARING=0
-# PT_HPU_LAZY_MODE=1 python PMPQ_evaluation_boolq_hpu_real.py --sensitivity_json Sensitivities_submodule/submodule_sens_TinyLlama-1.1B-intermediate-step-1431k-3T_BoolQ_train_pruning_s30_n2000_20260330_123456.json --run_mode quantize --run_dir boolq_fp8_runs/boolq_fp8_20260330_123456 --reuse_existing_configs --baseline_dtype fp32 --hp_dtype bf16 --fp8_format E4M3 --scale_method maxabs_hw_opt_weight --batch_size 64 --use_mark_step
+                                 
+                        
+                                
+                                                                                                                                                                                                                                                                                                                                                                                                                                                
 
-# Example usage (BOTH phases - recommended for first run):
-# export LOG_LEVEL_INC=1
-# export PT_HPU_WEIGHT_SHARING=0
-# PT_HPU_LAZY_MODE=1 python PMPQ_evaluation_boolq_hpu_real.py --sensitivity_json Sensitivities_submodule/submodule_sens_TinyLlama-1.1B-intermediate-step-1431k-3T_BoolQ_train_pruning_s30_n2000_20260330_123456.json --run_mode both --target_family mlp_only --clustering percentile --baseline_dtype fp32 --hp_dtype bf16 --fp8_format E4M3 --scale_method maxabs_hw_opt_weight --calib_max_samples 512 --batch_size 64 --use_mark_step
+                                                          
+                        
+                                
+                                                                                                                                                                                                                                                                                                                                                                                                                                         

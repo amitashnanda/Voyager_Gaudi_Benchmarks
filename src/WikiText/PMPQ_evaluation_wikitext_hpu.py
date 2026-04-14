@@ -35,7 +35,7 @@ Author: Mixed-Precision Quantization Team
 Date: 2025
 """
 
-# ENVIRONMENT SETUP
+                   
 
 
 import os
@@ -53,12 +53,12 @@ os.environ.update({
     "TOKENIZERS_PARALLELISM": "false"
 })
 
-# Log directory on Ceph (persistent across pod restarts)
+                                                        
 LOG_DIR_BASE = "/voyager/ceph/users/ananda2/Quantization/logs"
 os.makedirs(LOG_DIR_BASE, exist_ok=True)
 
 
-# ALL IMPORTS
+             
 
 
 import gc
@@ -84,7 +84,7 @@ from transformers import (
     default_data_collator,
 )
 
-# --- Optimum-Habana: patch Transformers models for Gaudi HPU ---
+                                                                 
 from optimum.habana import GaudiConfig, GaudiTrainer, GaudiTrainingArguments
 from optimum.habana.transformers.modeling_utils import adapt_transformers_to_gaudi
 
@@ -92,7 +92,7 @@ adapt_transformers_to_gaudi()
 
 warnings.filterwarnings('ignore')
 
-# LOGGING SETUP
+               
 
 
 def setup_logging(rank=0, log_dir=None):
@@ -105,19 +105,19 @@ def setup_logging(rank=0, log_dir=None):
         log_dir = LOG_DIR_BASE
     logger = logging.getLogger("PMPQ_WIKITEXT_EVALUATION")
     logger.setLevel(logging.INFO)
-    logger.handlers = []  # Clear any existing handlers
+    logger.handlers = []                               
 
     formatter = logging.Formatter(
         "%(asctime)s | %(levelname)-7s | %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S"
     )
 
-    # Console handler (always)
+                              
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
 
-    # File handler (rank 0 only)
+                                
     if rank == 0:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         log_file = os.path.join(log_dir, f"evaluation_{timestamp}.log")
@@ -129,7 +129,7 @@ def setup_logging(rank=0, log_dir=None):
     return logger
 
 
-# MODEL CONFIGURATIONS
+                      
 
 
 TINYLLAMA_MODELS = {
@@ -146,7 +146,7 @@ DEFAULT_GROUP_SIZE = 128
 
 
 
-# UTILITY FUNCTIONS
+                   
 
 
 def init_distributed():
@@ -164,7 +164,7 @@ def init_distributed():
     if dist.is_initialized():
         return
 
-    # Detect MPI environment (OpenMPI or Intel MPI) → normalize to RANK/WORLD_SIZE
+                                                                                  
     mpi_rank = os.environ.get("OMPI_COMM_WORLD_RANK") or os.environ.get("PMI_RANK")
     mpi_size = os.environ.get("OMPI_COMM_WORLD_SIZE") or os.environ.get("PMI_SIZE")
     if mpi_rank is not None and mpi_size is not None:
@@ -173,7 +173,7 @@ def init_distributed():
         os.environ.setdefault("LOCAL_RANK",
                               os.environ.get("OMPI_COMM_WORLD_LOCAL_RANK", mpi_rank))
 
-    # Detect torchrun or MPI-normalized env vars
+                                                
     rank_env = os.environ.get("RANK")
     size_env = os.environ.get("WORLD_SIZE")
 
@@ -241,8 +241,8 @@ def get_hpu_memory_info():
     try:
         import habana_frameworks.torch.hpu as hthpu
         if hthpu.is_available():
-            allocated = hthpu.memory_allocated() / (1024 ** 2)  # MB
-            max_allocated = hthpu.max_memory_allocated() / (1024 ** 2)  # MB
+            allocated = hthpu.memory_allocated() / (1024 ** 2)      
+            max_allocated = hthpu.max_memory_allocated() / (1024 ** 2)      
             return {
                 "allocated_mb": allocated,
                 "max_allocated_mb": max_allocated,
@@ -302,7 +302,7 @@ def log_hpu_status(logger):
 
 
 
-# CLUSTERING STRATEGIES (CPU — sklearn)
+                                       
 
 
 def kmeans_clustering(sensitivities, n_clusters=3):
@@ -346,7 +346,7 @@ def percentile_clustering(sensitivities, n_clusters=3):
 
 
 
-# QUANTIZATION - GROUP-WISE SCALES (CPU — weight manipulation)
+                                                              
 
 
 class LinearSymmetricGroupQuant(nn.Module):
@@ -456,7 +456,7 @@ def quantize_model_layers(model, layer_bits_map, group_size=128, rank=0, logger=
 
 
 
-# DATASET PREPARATION — for GaudiTrainer (CPU)
+                                              
 
 
 def prepare_wikitext_dataset(tokenizer, split="test", block_size=512):
@@ -501,7 +501,7 @@ def prepare_wikitext_dataset(tokenizer, split="test", block_size=512):
 
 
 
-# GAUDI EVALUATION HELPER
+                         
 
 
 def gaudi_evaluate_perplexity(model, eval_dataset, gaudi_config, logger,
@@ -532,7 +532,7 @@ def gaudi_evaluate_perplexity(model, eval_dataset, gaudi_config, logger,
         use_habana=True,
         use_lazy_mode=True,
         use_hpu_graphs_for_inference=use_hpu_graphs,
-        bf16=False,             # TRUE FP32 — no BF16 casting
+        bf16=False,                                          
         report_to="none",
         dataloader_drop_last=False,
         remove_unused_columns=False,
@@ -563,10 +563,10 @@ def gaudi_evaluate_perplexity(model, eval_dataset, gaudi_config, logger,
     if rank == 0:
         logger.info(f"[{eval_name}] eval_loss={eval_loss:.4f}, PPL={ppl:.2f}, time={eval_time:.1f}s")
 
-    # --- HPU memory cleanup ---
-    # GaudiTrainer moved model to HPU. Move it back to CPU and delete
-    # the trainer to free HPU memory. Without this, each iteration leaks
-    # ~4.6 GB on HPU (model copy stays allocated).
+                                
+                                                                     
+                                                                        
+                                                  
     model.to("cpu")
     del trainer
     free_hpu_memory()
@@ -581,17 +581,17 @@ def gaudi_evaluate_perplexity(model, eval_dataset, gaudi_config, logger,
 
 
 
-# MAIN PIPELINE
+               
 
 
 def main():
-    init_distributed()  # Must be FIRST — before get_rank() or any interactive I/O
+    init_distributed()                                                            
 
     rank = get_rank()
     world_size = get_world_size()
     set_seed(42)
 
-    # ========== Gaudi Version Selection ==========
+                                                   
     if rank == 0:
         print("\nSelect Gaudi version for output organization:")
         print("  1. Gaudi1")
@@ -615,7 +615,7 @@ def main():
         gaudi_version = None
     gaudi_version = broadcast_object(gaudi_version, rank)
 
-    # Set up directories with Gaudi version subfolder
+                                                     
     global LOG_DIR_BASE
     LOG_DIR = os.path.join(LOG_DIR_BASE, gaudi_version)
     os.makedirs(LOG_DIR, exist_ok=True)
@@ -633,7 +633,7 @@ def main():
         logger.info(f"Trainer:   GaudiTrainer (lazy mode + HPU graphs + FP32)")
         logger.info("")
 
-        # Log compute device mapping
+                                    
         logger.info("Compute Device Mapping:")
         logger.info("  Model inference (forward/loss)     → HPU (via GaudiTrainer)")
         logger.info("  Weight quantization (scale+round)  → CPU (one-time)")
@@ -642,11 +642,11 @@ def main():
         logger.info("  I/O, logging, result saving        → CPU")
         logger.info("")
 
-        # Log HPU status
+                        
         log_hpu_status(logger)
         logger.info("")
 
-        # Log environment
+                         
         logger.info(f"PyTorch:        {torch.__version__}")
         try:
             import optimum.habana
@@ -663,13 +663,13 @@ def main():
 
     print_section("PHASE 2: PMPQ EVALUATION (GROUP-WISE QUANTIZATION) - Gaudi HPU", rank)
 
-    # ========== STEP 1-4: All interactive prompts on rank 0, then broadcast ==========
+                                                                                       
     if rank == 0:
-        # STEP 1: Load Sensitivity File
+                                       
         print_section("STEP 1: LOAD PRUNING SENSITIVITY FILE", rank)
         sens_dir = Path(os.path.join("Sensitivities", gaudi_version))
         if not sens_dir.exists():
-            # Fall back to base Sensitivities/ if Gaudi subfolder doesn't exist
+                                                                               
             sens_dir = Path("Sensitivities")
         if not sens_dir.exists():
             logger.error(f"'Sensitivities/{gaudi_version}' folder not found! Run Phase 1 first.")
@@ -704,7 +704,7 @@ def main():
         logger.info(f"  Layers: {num_layers}")
         logger.info(f"  Sensitivity range: [{sens_values.min():.4f}, {sens_values.max():.4f}]")
 
-        # Detect model
+                      
         model_key = None
         for key, config in TINYLLAMA_MODELS.items():
             if config["num_layers"] == num_layers:
@@ -714,7 +714,7 @@ def main():
             model_key = "TinyLlama-1.1B"
         model_name = TINYLLAMA_MODELS[model_key]["model_name"]
 
-        # STEP 3: Clustering
+                            
         print_section("STEP 3: CLUSTERING CONFIGURATION", rank)
         clustering_choice = prompt_user(
             "Select clustering strategy:",
@@ -740,7 +740,7 @@ def main():
             labels, cluster_means = hierarchical_clustering(sens_values, n_clusters=n_clusters)
             strategy_name = "hierarchical"
 
-        # STEP 4: Bit Allocation
+                                
         print_section("STEP 4: BIT-WIDTH ALLOCATION", rank)
         if n_clusters == 3:
             bit_options = [
@@ -768,7 +768,7 @@ def main():
             bit_options, default=bit_options[0]
         )
 
-        # Parse bit choice
+                          
         if "Custom" in bit_choice:
             bits_str = input(f"Enter bits as comma-separated (e.g., '{','.join(str(b) for b in [16,8,8][:n_clusters])}'): ").strip()
             cluster_bits = [int(b.strip()) for b in bits_str.split(",")]
@@ -777,7 +777,7 @@ def main():
             match = re.search(r'\[.*?\]', bit_choice)
             cluster_bits = ast.literal_eval(match.group())
 
-        # Group size
+                    
         group_size_choice = prompt_user(
             "Select quantization group size:",
             ["128 (standard, same as GPTQ)", "64 (finer granularity)", "32 (finest)"],
@@ -790,14 +790,14 @@ def main():
         else:
             group_size = 128
 
-        # Build layer_bits_map
+                              
         layer_bits_map = {}
         for i in range(num_layers):
             cluster_id = labels[i]
             lbl_rank = next(j for j, (cid, _) in enumerate(cluster_means) if cid == cluster_id)
             layer_bits_map[i] = cluster_bits[lbl_rank]
 
-        # Pack config for broadcast
+                                   
         config = {
             'selected_file': selected_file,
             'sensitivities': sensitivities,
@@ -821,7 +821,7 @@ def main():
     else:
         config = None
 
-    # Broadcast config to all ranks
+                                   
     config = broadcast_object(config, rank)
 
     if config is None:
@@ -829,7 +829,7 @@ def main():
             dist.destroy_process_group()
         return
 
-    # Unpack config
+                   
     selected_file = config['selected_file']
     num_layers = config['num_layers']
     sens_values = np.array(config['sens_values'], dtype=np.float32)
@@ -843,9 +843,9 @@ def main():
     labels = np.array(config['labels'])
     cluster_means = config['cluster_means']
 
-    # ========== STEP 2: Load Tokenizer ==========
-    # NOTE: Models are loaded separately in Step 5 (baseline) and Step 6 (quantized)
-    # to avoid GaudiTrainer/Habana graph cache interference.
+                                                  
+                                                                                    
+                                                            
     print_section("STEP 2: LOADING TOKENIZER", rank)
     if rank == 0:
         logger.info(f"Loading tokenizer for {model_key} from {model_name}...")
@@ -859,7 +859,7 @@ def main():
         logger.info(f"  Tokenizer vocab: {tokenizer.vocab_size}")
         logger.info(f"  Device: {get_device_name()}")
 
-    # ========== Prepare Dataset ==========
+                                           
     if rank == 0:
         logger.info("Preparing dataset (CPU)...")
     eval_dataset = prepare_wikitext_dataset(tokenizer, split="test", block_size=512)
@@ -870,12 +870,12 @@ def main():
 
 
     gaudi_config = GaudiConfig(
-        use_fused_adam=False,           # Not training
-        use_fused_clip_norm=False,      # Not training
-        use_torch_autocast=False,       # TRUE FP32 — no autocast
+        use_fused_adam=False,                         
+        use_fused_clip_norm=False,                    
+        use_torch_autocast=False,                                
     )
 
-    # ========== STEP 5: Evaluate FP32 Baseline ==========
+                                                          
 
     print_section("STEP 5: EVALUATING FP32 BASELINE (HPU)", rank)
     if rank == 0:
@@ -892,15 +892,15 @@ def main():
     ppl_before, eval_time_before = gaudi_evaluate_perplexity(
         baseline_model, eval_dataset, gaudi_config, logger,
         eval_name="FP32 Baseline",
-        use_hpu_graphs=True  # Standard model supports HPU graphs
+        use_hpu_graphs=True                                      
     )
 
     if rank == 0:
-        throughput_before = total_tokens / eval_time_before  # tokens/second
+        throughput_before = total_tokens / eval_time_before                 
         logger.info(f"FP32 Baseline: PPL = {ppl_before:.2f} ({eval_time_before:.1f}s)")
         logger.info(f"  Throughput: {throughput_before:.2f} tokens/s")
 
-    # Save baseline model
+                         
     MODELS_DIR = "/voyager/ceph/users/ananda2/Quantization/Models"
     baseline_save_dir = os.path.join(MODELS_DIR, f"{model_key}_baseline")
     if rank == 0:
@@ -909,11 +909,11 @@ def main():
         tokenizer.save_pretrained(baseline_save_dir)
         logger.info(f"Baseline model saved: {baseline_save_dir}")
 
-    # Fully release baseline model + HPU memory
+                                               
     del baseline_model
     free_hpu_memory()
 
-    # ========== STEP 6: Load FRESH model + Apply Quantization ==========
+                                                                         
     print_section("STEP 6: APPLYING GROUP-WISE MIXED-PRECISION QUANTIZATION (CPU)", rank)
 
     if rank == 0:
@@ -939,28 +939,28 @@ def main():
         logger.info(f"  NOTE: Compression ratio covers nn.Linear weights only (the quantized scope),")
         logger.info(f"        not embeddings, LayerNorm, or the LM head.")
 
-    # ========== STEP 7: Evaluate Quantized Model ==========
+                                                            
     print_section("STEP 7: EVALUATING QUANTIZED MODEL (HPU)", rank)
 
     if rank == 0:
         logger.info("Evaluating quantized model on HPU...")
         logger.info("  NOTE: HPU graphs disabled for quantized model (custom LinearSymmetricGroupQuant modules)")
 
-    # Disable HPU graphs for quantized model — custom modules may fail graph capture
+                                                                                    
     ppl_after, eval_time_after = gaudi_evaluate_perplexity(
         quant_model, eval_dataset, gaudi_config, logger,
         eval_name="Quantized Model",
-        use_hpu_graphs=False  # Custom modules may break HPU graph capture
+        use_hpu_graphs=False                                              
     )
 
-    # Save quantized model
+                          
     bits_str = '_'.join(str(b) for b in cluster_bits)
     quant_save_dir = os.path.join(MODELS_DIR, f"{model_key}_quantized_{strategy_name}_bits{bits_str}_g{group_size}")
     if rank == 0:
         os.makedirs(quant_save_dir, exist_ok=True)
         quant_model.save_pretrained(quant_save_dir)
         tokenizer.save_pretrained(quant_save_dir)
-        # Also save quantization config for reproducibility
+                                                           
         quant_config = {
             'model_name': model_name,
             'strategy': strategy_name,
@@ -978,12 +978,12 @@ def main():
         logger.info(f"  NOTE: Saved weights are FP32 dequantized (quantize→round→dequantize). ")
         logger.info(f"        The file is NOT smaller on disk — this is simulated (fake) quantization.")
 
-    # Keep quant_model for interactive testing later
-    # (moved to CPU by gaudi_evaluate_perplexity already)
+                                                    
+                                                         
 
-    # ========== STEP 8-9: Results & Save (rank 0 only) ==========
+                                                                  
     if rank == 0:
-        throughput_after = total_tokens / eval_time_after  # tokens/second
+        throughput_after = total_tokens / eval_time_after                 
         speedup = throughput_after / throughput_before if throughput_before > 0 else 1.0
         ppl_increase = ppl_after - ppl_before
         ppl_increase_pct = (ppl_increase / ppl_before * 100.0) if ppl_before > 0 else 0.0
@@ -1016,7 +1016,7 @@ def main():
             quality = "POOR - Significant degradation"
         logger.info(f"  Quality:     {quality}")
 
-        # STEP 9: Save results
+                              
         logger.info("=" * 70)
         logger.info("SAVING RESULTS")
         logger.info("=" * 70)
@@ -1134,7 +1134,7 @@ def main():
 
         logger.info(f"Results saved: {log_path}")
 
-        # Also save summary to logs/ folder
+                                           
         summary_log = os.path.join(LOG_DIR, f"evaluation_results_{timestamp}.txt")
         with open(summary_log, "w") as f:
             f.write(f"PMPQ Evaluation Results — {timestamp}\n")
@@ -1159,18 +1159,18 @@ def main():
         logger.info("")
         logger.info("Phase 2 evaluation complete!")
 
-    # ========== STEP 10: Interactive Text Generation ==========
+                                                                
     if rank == 0:
         print_section("STEP 10: INTERACTIVE TEXT GENERATION", rank)
 
-        # Scan Models/ directory for available models
+                                                     
         MODELS_DIR = "/voyager/ceph/users/ananda2/Quantization/Models"
         available_models = {}
         if os.path.isdir(MODELS_DIR):
             for name in sorted(os.listdir(MODELS_DIR)):
                 model_path = os.path.join(MODELS_DIR, name)
                 if os.path.isdir(model_path):
-                    # Check for quant_config.json to identify model type
+                                                                        
                     qconfig_path = os.path.join(model_path, "quant_config.json")
                     if os.path.exists(qconfig_path):
                         with open(qconfig_path) as f:
@@ -1193,7 +1193,7 @@ def main():
                 print(f"  {i}. {info['label']}")
             print(f"{'='*70}")
 
-            # Let user select which models to load
+                                                  
             loaded_models = {}
 
             while True:
@@ -1232,7 +1232,7 @@ def main():
                     print(f"  Error loading model: {e}")
 
             if loaded_models:
-                # Set first loaded model as active
+                                                  
                 model_names = list(loaded_models.keys())
                 active_name = model_names[0]
                 active_model = loaded_models[active_name]
@@ -1266,7 +1266,7 @@ def main():
                         continue
 
                     if prompt.lower() == 'load':
-                        # Show unloaded models from Models/ directory
+                                                                     
                         unloaded = [(i, n, info) for i, (n, info) in enumerate(model_list, 1)
                                     if n not in loaded_models]
                         if not unloaded:
@@ -1347,7 +1347,7 @@ def main():
                         print(f"{'='*70}")
                         continue
 
-                    # Generate with active model on HPU
+                                                       
                     inputs = tokenizer(prompt, return_tensors="pt")
                     input_ids = inputs["input_ids"].to("hpu")
                     with torch.no_grad():
@@ -1371,14 +1371,14 @@ def main():
                     print(f"\n[{active_name} OUTPUT]:")
                     print(generated_text)
 
-                # Cleanup loaded models
+                                       
                 for mdl in loaded_models.values():
                     del mdl
                 loaded_models.clear()
 
         logger.info("Interactive generation complete.")
 
-    # Cleanup
+             
     del quant_model
     free_hpu_memory()
 

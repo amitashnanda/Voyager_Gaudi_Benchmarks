@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+                      
 """
 Phase2_fp8_quantize.py (enhanced observability + FP32 baseline default)
 
@@ -104,7 +104,7 @@ def get_device() -> torch.device:
 
 
 def hpu_set_env_safe() -> None:
-    # Newer stacks warn that hpu_set_env is deprecated in favor of hpu_inference_set_env.
+                                                                                         
     if hasattr(htcore, "hpu_inference_set_env"):
         htcore.hpu_inference_set_env()
     else:
@@ -112,7 +112,7 @@ def hpu_set_env_safe() -> None:
 
 
 def hpu_infer_init_safe(model: nn.Module) -> None:
-    # Prefer hpu_inference_initialize; fall back to hpu_initialize if needed.
+                                                                             
     if hasattr(htcore, "hpu_inference_initialize"):
         htcore.hpu_inference_initialize(model=model, mark_scales=True, mark_non_scales=False)
     else:
@@ -181,7 +181,7 @@ def evaluate_ppl(model: nn.Module, dataloader, device: torch.device, use_mark_st
     with torch.no_grad():
         for batch in dataloader:
             batch = {k: v.to(device) for k, v in batch.items()}
-            out = model(**batch)  # labels present -> loss
+            out = model(**batch)                          
             losses.append(float(out.loss.detach().cpu()))
             if use_mark_step and device.type == "hpu":
                 htcore.mark_step()
@@ -207,7 +207,7 @@ def calibration_forward_only(model: nn.Module, dataloader, device: torch.device,
     with torch.no_grad():
         for batch in dataloader:
             input_ids = batch["input_ids"].to(device)
-            _ = model(input_ids=input_ids)  # forward-only calibration
+            _ = model(input_ids=input_ids)                            
             if use_mark_step and device.type == "hpu":
                 htcore.mark_step()
     dt = time.time() - t0
@@ -277,7 +277,7 @@ def select_fp8_modules(
 
     if max_fp8_modules and max_fp8_modules > 0 and len(fp8_names) > max_fp8_modules:
         fp8_pairs = [(names[i], float(vals[i])) for i in range(len(names)) if fp8_mask[i]]
-        fp8_pairs.sort(key=lambda kv: kv[1])  # least sensitive first
+        fp8_pairs.sort(key=lambda kv: kv[1])                         
         fp8_names = [n for (n, _) in fp8_pairs[:max_fp8_modules]]
         meta["max_fp8_modules_applied"] = int(max_fp8_modules)
 
@@ -291,7 +291,7 @@ def infer_num_layers(model_name_or_path: str) -> int:
     cfg = AutoConfig.from_pretrained(model_name_or_path)
     if hasattr(cfg, "num_hidden_layers") and cfg.num_hidden_layers is not None:
         return int(cfg.num_hidden_layers)
-    # fallback for other configs
+                                
     for k in ("n_layer", "num_layers"):
         if hasattr(cfg, k):
             return int(getattr(cfg, k))
@@ -371,7 +371,7 @@ def estimate_mixed_precision_size_bytes(
             if mod.bias is not None:
                 fp8_bias_params += int(mod.bias.numel())
 
-    # Treat whole model as hp_dtype, then replace FP8 weights footprint
+                                                                       
     base_hp_bytes = total_params * hp_b
     mixed_bytes_est = base_hp_bytes - (fp8_weight_params * hp_b) + (fp8_weight_params * 1)
 
@@ -442,7 +442,7 @@ def main():
 
     ap.add_argument("--fp8_format", type=str, default="E4M3", choices=["E4M3", "E5M2"])
     ap.add_argument("--hp_dtype", type=str, default="bf16", choices=["bf16", "fp16", "fp32"])
-    ap.add_argument("--baseline_dtype", type=str, default="fp32", choices=["bf16", "fp16", "fp32"])  # changed default
+    ap.add_argument("--baseline_dtype", type=str, default="fp32", choices=["bf16", "fp16", "fp32"])                   
     ap.add_argument("--scale_method", type=str, default="maxabs_hw_opt_weight",
                     choices=["maxabs_hw", "maxabs_hw_opt_weight", "ACT_MAXABS_POW2_WEIGHTS_PCS_OPT_POW2"])
     ap.add_argument("--input_backoff", type=float, default=0.25)
@@ -489,24 +489,24 @@ def main():
     logger.info(f"Device: {dev_name} | LOG_LEVEL_INC={os.environ.get('LOG_LEVEL_INC')}")
     logger.info(f"Run mode: {args.run_mode}")
 
-    # Load sensitivities and candidates
+                                       
     sens_path = Path(args.sensitivity_json)
     sens = load_sensitivities(sens_path)
     candidates = filter_candidates(sens, args.target_family)
 
-    # Determine num layers for logging
+                                      
     num_layers = infer_num_layers(args.model_name_or_path)
     logger.info(f"Model: {args.model_name_or_path} | num_layers={num_layers} | target_family={args.target_family}")
     logger.info(f"Candidates: {len(candidates)} (filtered submodules)")
 
-    # Paths
+           
     dump_stats_path = str((run_dir / "inc_output" / "measure").as_posix())
     measure_cfg_path = run_dir / "fp8_measure.json"
     quant_cfg_path = run_dir / "fp8_quantize.json"
     measure_meta_path = run_dir / "measure_summary.json"
     selection_meta_path = run_dir / "selection_meta.json"
 
-    # Reuse configs if requested (recommended for quantize-only to avoid mismatched allowlists)
+                                                                                               
     fp8_modules: List[str] = []
     blocklist_names = list(DEFAULT_BLOCKLIST)
     selection_meta: Dict = {}
@@ -526,7 +526,7 @@ def main():
             max_fp8_modules=args.max_fp8_modules,
         )
 
-    # Build BF16/FP8 mappings for logs
+                                      
     layer_precision_map, layer_fp8_detail = build_layer_precision_maps(fp8_modules, num_layers)
 
     fp8_layers = [int(k) for k, v in layer_precision_map.items() if v == "FP8"]
@@ -542,7 +542,7 @@ def main():
     logger.info(f"FP8 layers (any selected submodule): {len(fp8_layers)} -> {fp8_layers}")
     logger.info(f"BF16 layers (no selected submodule): {len(bf16_layers)} -> {bf16_layers}")
 
-    # Detailed per-layer breakdown (compact)
+                                            
     for i in range(num_layers):
         mods = layer_fp8_detail.get(str(i), [])
         if mods:
@@ -550,10 +550,10 @@ def main():
         else:
             logger.info(f"Layer {i:02d}: BF16 (no FP8 submodules)")
 
-    # Save selection meta
+                         
     write_json(selection_meta_path, selection_meta)
 
-    # Tokenizer/datasets
+                        
     tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
@@ -567,14 +567,14 @@ def main():
     logger.info(f"Calibration blocks: {min(args.calib_samples, len(calib_ds))} | Eval blocks: {len(eval_ds)}")
     logger.info(f"Eval tokens: {total_tokens}")
 
-    # Size estimates (computed from a fresh CPU model and module list)
+                                                                      
     size_est = estimate_mixed_precision_size_bytes(args.model_name_or_path, args.hp_dtype, fp8_modules)
     logger.info(f"Size estimate (FP32 baseline): {size_est['fp32_model_size_mb_est']:.2f} MB")
     logger.info(f"Size estimate (all {args.hp_dtype}): {size_est['hp_dtype_model_size_mb_est']:.2f} MB")
     logger.info(f"Size estimate (mixed {args.hp_dtype}+FP8 weights): {size_est['mixed_model_size_mb_est']:.2f} MB")
     logger.info(f"Estimated compression ratio (FP32 -> mixed): {size_est['compression_ratio_fp32_to_mixed_est']:.3f}x")
 
-    # Baseline evaluation (default FP32 now)
+                                            
     base_model = AutoModelForCausalLM.from_pretrained(args.model_name_or_path)
     base_model = cast_model_dtype(base_model, args.baseline_dtype)
     base_sd_bytes, base_sd_by_dtype = tensor_bytes_from_state_dict(base_model)
@@ -585,7 +585,7 @@ def main():
     del base_model
     free_hpu_memory()
 
-    # Build configs (or reuse)
+                              
     measure_cfg = build_measure_cfg(
         dump_stats_path=dump_stats_path,
         allowlist_names=fp8_modules,
@@ -614,7 +614,7 @@ def main():
         scale_format=args.scale_format,
     )
 
-    # Always write current configs for traceability
+                                                   
     write_json(measure_cfg_path, measure_cfg)
     write_json(quant_cfg_path, quant_cfg)
 
@@ -635,7 +635,7 @@ def main():
         finalize_calibration(model_m)
         logger.info(f"[MEASURE] calibration_time_s={calib_time:.3f} dump_stats_path={dump_stats_path}")
 
-        # persist MEASURE metadata
+                                  
         write_json(measure_meta_path, {
             "timestamp": ts,
             "calib_time_s": float(calib_time),
@@ -653,7 +653,7 @@ def main():
         os.environ.setdefault("PT_HPU_WEIGHT_SHARING", "0")
         logger.info(f"PT_HPU_WEIGHT_SHARING={os.environ.get('PT_HPU_WEIGHT_SHARING')}")
 
-        # If quantize-only, load measure metadata if available
+                                                              
         if calib_time is None and measure_meta_path.exists():
             try:
                 mmeta = read_json(measure_meta_path)
@@ -668,7 +668,7 @@ def main():
         cfg_q = FP8Config.from_json_file(str(quant_cfg_path))
         model_q = convert(model_q, cfg_q)
 
-        # state_dict footprint of quantized model (CPU-side)
+                                                            
         quant_sd_bytes, quant_sd_by_dtype = tensor_bytes_from_state_dict(model_q)
 
         ppl_mixed, t_fp8 = evaluate_ppl(model_q, eval_loader, device, args.use_mark_step)
@@ -679,11 +679,11 @@ def main():
         del model_q
         free_hpu_memory()
 
-    # Final metrics
+                   
     ppl_delta = (ppl_mixed - ppl_base) if (ppl_mixed is not None) else None
     ppl_delta_pct = (ppl_delta / ppl_base * 100.0) if (ppl_delta is not None and ppl_base > 0) else None
 
-    # Summary JSON
+                  
     summary = {
         "timestamp": ts,
         "run_dir": str(run_dir),
@@ -732,7 +732,7 @@ def main():
     }
     write_json(run_dir / "run_summary.json", summary)
 
-    # Print a compact final report to logs
+                                          
     logger.info("=== SUMMARY ===")
     logger.info(f"Baseline ({args.baseline_dtype}) PPL: {ppl_base:.6f}")
     if ppl_mixed is not None:
@@ -749,13 +749,13 @@ if __name__ == "__main__":
     main()
 
 
-# export LOG_LEVEL_INC=1
+                        
 
-#PT_HPU_LAZY_MODE=1 python PMPQ_evaluation_wikitext_hpu_real.py --sensitivity_json Sensitivities_submodule/submodule_sens_TinyLlama-1.1B-intermediate-step-1431k-3T_validation_pruning_s30_20260323_185146.json --run_mode measure --target_family mlp_only --clustering percentile  --baseline_dtype fp32 --hp_dtype bf16 --fp8_format E4M3 --scale_method maxabs_hw_opt_weight --calib_samples 512 --use_mark_step
+                                                                                                                                                                                                                                                                                                                                                                                                                    
 
-# export LOG_LEVEL_INC=1
-# export PT_HPU_WEIGHT_SHARING=0
+                        
+                                
 
-#PT_HPU_LAZY_MODE=1 python PMPQ_evaluation_wikitext_hpu_real.py --sensitivity_json Sensitivities_submodule/submodule_sens_TinyLlama-1.1B-intermediate-step-1431k-3T_validation_pruning_s30_20260323_185146.json --run_mode quantize --run_dir fp8_runs/fp8_20260327_222920 --reuse_existing_configs --baseline_dtype fp32 --hp_dtype bf16 --fp8_format E4M3   --scale_method maxabs_hw_opt_weight --use_mark_step 
+                                                                                                                                                                                                                                                                                                                                                                                                                  
 
 

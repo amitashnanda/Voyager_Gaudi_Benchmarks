@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+                      
 """
 Plot submodule-level sensitivity scores for a mixed-precision FP8/BF16
 quantization run on Gaudi 2 (Intel Neural Compressor).
@@ -21,13 +21,13 @@ import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 import numpy as np
 
-# ---------------------------------------------------------------------------
-# Paths
-# ---------------------------------------------------------------------------
+                                                                             
+       
+                                                                             
 SUBMODULE_DIR = "/pscratch/sd/a/ananda/SMPQuant/submodule"
 OUTPUT_FOLDER = "/pscratch/sd/a/ananda/SMPQuant/plots"
 
-# Each entry: (dataset_label, sens_json, run_json, output_filename)
+                                                                   
 DATASETS = [
     (
         "WikiText",
@@ -45,22 +45,22 @@ DATASETS = [
 
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
-# Precision colors  (consistent with the layer-level plot)
+                                                          
 PREC_COLORS = {
-    "FP8":  "#d62728",   # red
-    "BF16": "#1f77b4",   # blue
+    "FP8":  "#d62728",        
+    "BF16": "#1f77b4",         
 }
 
-# Submodule-type sort order (controls x-axis ordering within a layer)
+                                                                     
 PROJ_ORDER = {
-    "down_proj": 0, "gate_proj": 1, "up_proj": 2,   # MLP
-    "k_proj": 3,    "o_proj": 4,    "q_proj": 5, "v_proj": 6,  # Attention
+    "down_proj": 0, "gate_proj": 1, "up_proj": 2,        
+    "k_proj": 3,    "o_proj": 4,    "q_proj": 5, "v_proj": 6,             
 }
 
 
-# ---------------------------------------------------------------------------
-# Data loading
-# ---------------------------------------------------------------------------
+                                                                             
+              
+                                                                             
 
 def load_data(sens_json, run_json):
     """Load sensitivity and run-summary JSON files."""
@@ -69,12 +69,12 @@ def load_data(sens_json, run_json):
     with open(run_json) as f:
         summary = json.load(f)
 
-    sensitivities = sens_data["sensitivities"]   # {module_name: float}
-    fp8_set       = set(summary["fp8_modules"])  # set of FP8-assigned names
+    sensitivities = sens_data["sensitivities"]                         
+    fp8_set       = set(summary["fp8_modules"])                             
     target_family = summary.get("target_family", "all")
 
-    # Build structured records
-    # module name format: model.layers.{layer}.{family}.{proj}
+                              
+                                                              
     pattern = re.compile(
         r"model\.layers\.(\d+)\.(mlp|self_attn)\.(\w+)"
     )
@@ -84,8 +84,8 @@ def load_data(sens_json, run_json):
         if not m:
             continue
         layer_num  = int(m.group(1))
-        family     = m.group(2)      # "mlp" or "self_attn"
-        proj       = m.group(3)      # "down_proj", "gate_proj", etc.
+        family     = m.group(2)                            
+        proj       = m.group(3)                                      
         precision  = "FP8" if name in fp8_set else "BF16"
         records.append({
             "name":      name,
@@ -96,7 +96,7 @@ def load_data(sens_json, run_json):
             "precision": precision,
         })
 
-    # Sort: by layer → family (mlp first) → proj type
+                                                     
     def sort_key(r):
         fam_order = 0 if r["family"] == "mlp" else 1
         return (r["layer"], fam_order, PROJ_ORDER.get(r["proj"], 99))
@@ -106,11 +106,11 @@ def load_data(sens_json, run_json):
     return records, summary, target_family
 
 
-# ---------------------------------------------------------------------------
-# Axis helpers (mirrors plot_gaudi2_eval_clusters.py style)
-# ---------------------------------------------------------------------------
+                                                                             
+                                                           
+                                                                             
 
-# Match plot_gaudi2_eval_clusters.py typography
+                                               
 TITLE_FS        = 30
 AXIS_LABEL_FS   = 30
 XTICK_FS        = 25
@@ -133,9 +133,9 @@ def _set_yaxis(ax, values, padding_frac=0.08, num_ticks=8):
     ax.set_yticklabels([f"{t:.5f}" for t in ticks], fontsize=YTICK_FS)
 
 
-# ---------------------------------------------------------------------------
-# Core plot function
-# ---------------------------------------------------------------------------
+                                                                             
+                    
+                                                                             
 
 def create_submodule_plot(records, summary, title_suffix, output_path, dataset_label=""):
     """
@@ -151,10 +151,10 @@ def create_submodule_plot(records, summary, title_suffix, output_path, dataset_l
     n = len(records)
     x = np.arange(n)
 
-    # Short x-axis labels:  L{layer}.{proj}  or  L{layer}.attn.{proj}
+                                                                     
     def short_label(r):
         if r["family"] == "mlp":
-            proj = r["proj"].replace("_proj", "")   # down / gate / up
+            proj = r["proj"].replace("_proj", "")                     
             return f"L{r['layer']}.{proj}"
         else:
             proj = r["proj"].replace("_proj", "")
@@ -162,16 +162,16 @@ def create_submodule_plot(records, summary, title_suffix, output_path, dataset_l
 
     xlabels = [short_label(r) for r in records]
 
-    # Keep all x tick labels, but widen figure as label count grows so labels do not overlap.
-    # fig_width = max(14, 0.30 * n)
-    # fig, ax = plt.subplots(figsize=(fig_width, 8))
+                                                                                             
+                                   
+                                                    
     fig, ax = plt.subplots(figsize=(18, 10))
 
-    # --- grey backbone ---
+                           
     ax.plot(x, sens_vals, "-", color="#aaaaaa", linewidth=2.5, zorder=1)
 
-    # --- coloured markers (initial pass; restyled per-proj below) ---
-    # --- dotted reference lines (mean per precision cluster) ---
+                                                                      
+                                                                 
     ref_handles = []
     for prec in ("FP8", "BF16"):
         cluster_s = [s for s, p in zip(sens_vals, precisions) if p == prec]
@@ -180,7 +180,7 @@ def create_submodule_plot(records, summary, title_suffix, output_path, dataset_l
             c = PREC_COLORS[prec]
             ax.axhline(y=y_mean, color=c, linestyle=":", linewidth=3.5,
                        alpha=0.9, zorder=0)
-            # Legend: dotted line only — no marker, because shape encodes proj type
+                                                                                   
             ref_handles.append(
                 mlines.Line2D(
                     [], [], color=c, linestyle=":", linewidth=3.5,
@@ -188,40 +188,40 @@ def create_submodule_plot(records, summary, title_suffix, output_path, dataset_l
                 )
             )
 
-    # --- axes ---
-    # Group by layer: place one tick at the centre submodule of each layer,
-    # draw subtle vertical separators at layer boundaries.
+                  
+                                                                           
+                                                          
     from itertools import groupby as _groupby
 
     layer_groups = {}
     for xi, r in zip(x, records):
         layer_groups.setdefault(r["layer"], []).append(xi)
 
-    # One tick per layer at the group centre
+                                            
     layer_tick_pos = [int(np.mean(idxs)) for idxs in layer_groups.values()]
     layer_tick_lbl = [f"layer_{lyr}" for lyr in layer_groups]
 
     ax.set_xticks(layer_tick_pos)
     ax.set_xticklabels(layer_tick_lbl, rotation=90, ha="center", fontsize=XTICK_FS, fontweight="normal")
 
-    # Minor ticks (invisible) at every submodule position for the grid
+                                                                      
     ax.set_xticks(x, minor=True)
     ax.tick_params(axis="x", which="minor", length=0)
 
-    # Vertical separators between layer groups (between last of one and first of next)
+                                                                                      
     all_layer_indices = list(layer_groups.values())
     for grp in all_layer_indices[:-1]:
         boundary = grp[-1] + 0.5
         ax.axvline(boundary, color="#cccccc", linewidth=1.0, linestyle="-", zorder=0)
 
-    # --- coloured + shaped markers per proj type ---
+                                                     
     proj_shape_map = {"down_proj": "^", "gate_proj": "s", "up_proj": "D"}
     for xi, r in zip(x, records):
         mk = proj_shape_map.get(r["proj"], "o")
         ax.plot(xi, r["sens"], mk, color=PREC_COLORS[r["precision"]],
                 markersize=MARKER_SIZE, zorder=3)
 
-    # Proj legend: same shapes and size as on the chart, in neutral grey
+                                                                        
     proj_markers = {"down": "^", "gate": "s", "up": "D"}
     proj_handles = [
         mlines.Line2D([], [], color="#555555", marker=m, markersize=MARKER_SIZE,
@@ -239,7 +239,7 @@ def create_submodule_plot(records, summary, title_suffix, output_path, dataset_l
     ax.grid(True, alpha=0.4, linestyle="-", linewidth=0.5)
     ax.set_axisbelow(True)
 
-    # --- title + subtitle ---
+                              
     model_short = summary.get("model_name_or_path", "").split("/")[-1]
     ppl_base  = summary.get("ppl_baseline", float("nan"))
     ppl_mixed = summary.get("ppl_mixed",    float("nan"))
@@ -249,8 +249,8 @@ def create_submodule_plot(records, summary, title_suffix, output_path, dataset_l
     n_bf16    = len(summary.get("bf16_layers", []))
 
     title = "Magnitude-Pruning based Sensitivity Clustering - MLP Submodules"
-    # if dataset_label:
-    #     title += f" ({dataset_label})"
+                       
+                                        
     ax.set_title(title, fontsize=TITLE_FS, fontweight='bold', pad=TITLE_PAD)
 
     _legend_kw = dict(
@@ -265,7 +265,7 @@ def create_submodule_plot(records, summary, title_suffix, output_path, dataset_l
         handletextpad=0.7,
     )
 
-    # Precision cluster — top right, label text colored to match dotted lines
+                                                                             
     leg_prec = ax.legend(
         handles=ref_handles,
         loc="upper right",
@@ -277,7 +277,7 @@ def create_submodule_plot(records, summary, title_suffix, output_path, dataset_l
     )
     ax.add_artist(leg_prec)
 
-    # Projection — top right, horizontal row, anchored just left of Precision cluster
+                                                                                     
     ax.legend(
         handles=proj_handles,
         loc="upper right",
@@ -295,9 +295,9 @@ def create_submodule_plot(records, summary, title_suffix, output_path, dataset_l
     plt.close(fig)
 
 
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
+                                                                             
+      
+                                                                             
 
 def main():
     print("=" * 70)

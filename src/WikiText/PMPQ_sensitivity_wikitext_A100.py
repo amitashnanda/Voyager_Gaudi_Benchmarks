@@ -1,4 +1,4 @@
-# Phase_1_PMPQ_TinyLlama_WikiText_Sensitivity.py
+                                                
 """
 Phase 1: Pruning-Based Sensitivity Analysis for TinyLlama on WikiText-2 (PMPQ)
 ================================================================================
@@ -40,9 +40,9 @@ Author: Mixed-Precision Quantization Team
 Date: 2025-2026
 """
 
-# ============================================================================
-# ENVIRONMENT SETUP
-# ============================================================================
+                                                                              
+                   
+                                                                              
 import os
 
 HF_HOME = os.environ.get("HF_HOME", "/pscratch/sd/s/sreeb12/.cache/huggingface")
@@ -62,9 +62,9 @@ for p in (os.environ["HF_DATASETS_CACHE"], os.environ["HF_HUB_CACHE"]):
 
 print("Environment setup - cache:", HF_HOME)
 
-# ============================================================================
-# IMPORTS
-# ============================================================================
+                                                                              
+         
+                                                                              
 import json, time, random, argparse, warnings
 import numpy as np
 from datetime import datetime
@@ -88,9 +88,9 @@ if torch.cuda.is_available():
         props = torch.cuda.get_device_properties(i)
         print(f"  GPU {i}: {props.name}  |  {props.total_memory / 1024**3:.1f} GB")
 
-# ============================================================================
-# CONFIGURATION
-# ============================================================================
+                                                                              
+               
+                                                                              
 
 TINYLLAMA_MODELS = {
     "TinyLlama-1.1B": {
@@ -101,14 +101,14 @@ TINYLLAMA_MODELS = {
     }
 }
 
-CALIBRATION_SPLIT   = "validation"  # Phase 1 uses validation split (matches HPU)
+CALIBRATION_SPLIT   = "validation"                                               
 SEQUENCE_LENGTH     = 512
-DEFAULT_GROUP_SIZE  = 128        # stored in metadata for Phase 2 reference
+DEFAULT_GROUP_SIZE  = 128                                                  
 
 
-# ============================================================================
-# UTILITIES
-# ============================================================================
+                                                                              
+           
+                                                                              
 
 def set_seed(seed=42):
     random.seed(seed); np.random.seed(seed)
@@ -158,9 +158,9 @@ def get_cuda_memory_info():
     total_max_allocated = 0
 
     for i in range(num_gpus):
-        total_allocated += torch.cuda.memory_allocated(i) / (1024 ** 2)  # MB
-        total_reserved += torch.cuda.memory_reserved(i) / (1024 ** 2)  # MB
-        total_max_allocated += torch.cuda.max_memory_allocated(i) / (1024 ** 2)  # MB
+        total_allocated += torch.cuda.memory_allocated(i) / (1024 ** 2)      
+        total_reserved += torch.cuda.memory_reserved(i) / (1024 ** 2)      
+        total_max_allocated += torch.cuda.max_memory_allocated(i) / (1024 ** 2)      
 
     return {
         'allocated_mb': total_allocated,
@@ -178,9 +178,9 @@ def reset_cuda_memory():
             torch.cuda.empty_cache()
 
 
-# ============================================================================
-# DATASET PREPARATION (matches HPU implementation)
-# ============================================================================
+                                                                              
+                                                  
+                                                                              
 
 def prepare_wikitext_dataset(tokenizer, split="validation", block_size=512):
     """
@@ -200,7 +200,7 @@ def prepare_wikitext_dataset(tokenizer, split="validation", block_size=512):
     except Exception:
         dataset = load_dataset("wikitext", "wikitext-2-v1", split=split)
 
-    # Tokenize all text
+                       
     def tokenize_function(examples):
         return tokenizer(examples["text"])
 
@@ -211,16 +211,16 @@ def prepare_wikitext_dataset(tokenizer, split="validation", block_size=512):
         desc=f"Tokenizing {split}"
     )
 
-    # Concatenate all texts and chunk into fixed-size blocks
+                                                            
     def group_texts(examples):
-        # Concatenate all texts
+                               
         concatenated = {k: list(chain(*examples[k])) for k in examples.keys()}
         total_length = len(concatenated["input_ids"])
 
-        # Drop the last chunk if it's smaller than block_size
+                                                             
         total_length = (total_length // block_size) * block_size
 
-        # Split into chunks of block_size
+                                         
         result = {
             k: [t[i: i + block_size] for i in range(0, total_length, block_size)]
             for k, t in concatenated.items()
@@ -238,9 +238,9 @@ def prepare_wikitext_dataset(tokenizer, split="validation", block_size=512):
     return chunked
 
 
-# ============================================================================
-# MAGNITUDE PRUNING (unchanged from working code)
-# ============================================================================
+                                                                              
+                                                 
+                                                                              
 
 def apply_magnitude_pruning_to_layer(layer, sparsity_level):
     """
@@ -256,24 +256,24 @@ def apply_magnitude_pruning_to_layer(layer, sparsity_level):
             if param.requires_grad:
                 flat_param = param.data.view(-1)
 
-                # Keep top (1 - sparsity_level)% of weights by abs value
+                                                                        
                 k = int(flat_param.numel() * (1 - sparsity_level))
                 if k == 0:
                     continue
 
-                # threshold = kth largest absolute value
+                                                        
                 threshold = torch.topk(
                     torch.abs(flat_param), k, largest=True
                 )[0][-1]
 
-                # Zero out weights below threshold
+                                                  
                 mask = torch.abs(flat_param) >= threshold
                 param.data *= mask.float().view(param.data.shape)
 
 
-# ============================================================================
-# PERPLEXITY EVALUATION (unchanged from working code, train split enforced)
-# ============================================================================
+                                                                              
+                                                                           
+                                                                              
 
 def evaluate_perplexity(model, eval_dataset, device, eval_name="Evaluation"):
     """
@@ -306,7 +306,7 @@ def evaluate_perplexity(model, eval_dataset, device, eval_name="Evaluation"):
             outputs = model(input_ids)
             logits = outputs.logits
 
-            # Shift for causal LM
+                                 
             shift_logits = logits[:, :-1, :].contiguous()
             shift_labels = labels[:, 1:].contiguous()
 
@@ -315,7 +315,7 @@ def evaluate_perplexity(model, eval_dataset, device, eval_name="Evaluation"):
                 shift_labels.view(-1)
             )
 
-            # Accumulate loss (multiply by sequence length for proper averaging)
+                                                                                
             seq_len = input_ids.size(1)
             total_loss += loss.item() * seq_len
             total_tokens += seq_len
@@ -327,9 +327,9 @@ def evaluate_perplexity(model, eval_dataset, device, eval_name="Evaluation"):
     return ppl, eval_time, total_tokens, throughput
 
 
-# ============================================================================
-# PMPQ SENSITIVITY COMPUTATION
-# ============================================================================
+                                                                              
+                              
+                                                                              
 
 def compute_pruning_sensitivity(model, model_name, num_layers,
                                 tokenizer, device, eval_dataset,
@@ -378,7 +378,7 @@ def compute_pruning_sensitivity(model, model_name, num_layers,
         print(f"\n  [Layer {layer_idx:2d}/{num_layers-1}] Loading fresh model...")
         layer_t0 = time.time()
 
-        # ---- 1. Fresh model ----
+                                  
         pruned_model = AutoModelForCausalLM.from_pretrained(model_name)
 
         if torch.cuda.device_count() > 1:
@@ -386,7 +386,7 @@ def compute_pruning_sensitivity(model, model_name, num_layers,
 
         pruned_model = pruned_model.to(device)
 
-        # ---- 2. Get target layer ----
+                                       
         if hasattr(pruned_model, 'module'):
             base = pruned_model.module
         else:
@@ -397,18 +397,18 @@ def compute_pruning_sensitivity(model, model_name, num_layers,
         else:
             target_layer = base.layers[layer_idx]
 
-        # ---- 3. Prune that layer only ----
+                                            
         print(f"  [Layer {layer_idx:2d}] Applying {sparsity_level*100:.0f}% pruning...")
         apply_magnitude_pruning_to_layer(target_layer, sparsity_level)
 
-        # ---- 4. Evaluate pruned model ----
+                                            
         print(f"  [Layer {layer_idx:2d}] Evaluating perplexity...")
         pruned_ppl, _, _, _ = evaluate_perplexity(
             pruned_model, eval_dataset, device,
             eval_name=f"Layer {layer_idx:2d} Pruned"
         )
 
-        # ---- 5. Sensitivity = perplexity increase ----
+                                                        
         sensitivity = pruned_ppl - baseline_ppl
         layer_time  = time.time() - layer_t0
 
@@ -420,7 +420,7 @@ def compute_pruning_sensitivity(model, model_name, num_layers,
               f"Sensitivity: {sensitivity:.4f} | "
               f"Time: {format_duration(layer_time)}")
 
-        # ---- 6. Clean up ----
+                               
         del pruned_model
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
@@ -432,9 +432,9 @@ def compute_pruning_sensitivity(model, model_name, num_layers,
     return layer_sensitivities, layer_times, baseline_ppl, baseline_time
 
 
-# ============================================================================
-# MAIN PIPELINE
-# ============================================================================
+                                                                              
+               
+                                                                              
 
 def main():
     parser = argparse.ArgumentParser(
@@ -464,9 +464,9 @@ def main():
     device   = pick_device()
     num_gpus = torch.cuda.device_count() if torch.cuda.is_available() else 0
 
-    # ==========================================================================
-    # STEP 1: Load Model
-    # ==========================================================================
+                                                                                
+                        
+                                                                                
     print_section("STEP 1: LOADING MODEL")
     model_key    = "TinyLlama-1.1B"
     model_config = TINYLLAMA_MODELS[model_key]
@@ -493,9 +493,9 @@ def main():
     print(f"  Loaded in : {format_duration(model_loading_time)}")
     print(f"  FP32 size : {fp32_size_mb:.2f} MB")
 
-    # ==========================================================================
-    # STEP 2: Prepare Dataset
-    # ==========================================================================
+                                                                                
+                             
+                                                                                
     print_section("STEP 2: PREPARING DATASET")
     eval_dataset = prepare_wikitext_dataset(tokenizer, split=CALIBRATION_SPLIT, block_size=SEQUENCE_LENGTH)
     num_samples = len(eval_dataset)
@@ -503,13 +503,13 @@ def main():
     print(f"WikiText-2 {CALIBRATION_SPLIT}: {num_samples} samples × {SEQUENCE_LENGTH} tokens")
     print(f"Total tokens: {total_tokens:,}")
 
-    # ==========================================================================
-    # STEP 3: Compute Pruning Sensitivities
-    # ==========================================================================
+                                                                                
+                                           
+                                                                                
     print_section("STEP 3: COMPUTING PRUNING-BASED SENSITIVITIES")
 
     sensitivity_t0 = time.time()
-    layer_sensitivities, layer_times, baseline_ppl, baseline_time = \
+    layer_sensitivities, layer_times, baseline_ppl, baseline_time =\
         compute_pruning_sensitivity(
             model=model,
             model_name=model_name,
@@ -523,7 +523,7 @@ def main():
 
     total_pipeline_time = time.time() - pipeline_t0
 
-    # Summary print
+                   
     print(f"\n  Sensitivity computation: {format_duration(sensitivity_total_time)}")
     print(f"  Avg time per layer    : {format_duration(sensitivity_total_time / num_layers)}")
     print(f"  Min time per layer    : {format_duration(min(layer_times.values()))}")
@@ -534,21 +534,21 @@ def main():
     for i in range(num_layers):
         print(f"  layer_{i:<4}  {layer_sensitivities[f'layer_{i}']:.6f}")
 
-    # ==========================================================================
-    # STEP 3: Save Sensitivity JSON (for Phase 2)
-    # ==========================================================================
+                                                                                
+                                                 
+                                                                                
     print_section("STEP 3: SAVING SENSITIVITY FILES")
     os.makedirs("Sensitivities", exist_ok=True)
     timestamp     = datetime.now().strftime("%Y%m%d_%H%M%S")
     json_filename = f"sens_PMPQ_TinyLlama_{timestamp}.json"
     json_path     = os.path.join("Sensitivities", json_filename)
 
-    # Build sensitivity values array for stats
+                                              
     sv = np.array([layer_sensitivities[f"layer_{i}"] for i in range(num_layers)],
                   dtype=np.float32)
     ranked = sorted(range(num_layers), key=lambda i: sv[i], reverse=True)
 
-    # JSON output: sensitivities + full metadata (Phase 2 reads "sensitivities" key)
+                                                                                    
     json_data = {
         "sensitivities": layer_sensitivities,
         "metadata": {
@@ -591,9 +591,9 @@ def main():
 
     print(f"  Sensitivity JSON saved: {json_path}")
 
-    # ==========================================================================
-    # STEP 4: Save Full Results Log (matching format from reference log file)
-    # ==========================================================================
+                                                                                
+                                                                             
+                                                                                
     print_section("STEP 4: SAVING RESULTS LOG")
     os.makedirs("Evaluation", exist_ok=True)
     log_filename = f"phase1_PMPQ_sensitivity_TinyLlama_{timestamp}.txt"
@@ -605,7 +605,7 @@ def main():
         f.write("LAYER SENSITIVITY FILE - PRUNING-BASED (PMPQ) ON WIKITEXT\n")
         f.write("="*80 + "\n\n")
 
-        # ── CONFIGURATION ──────────────────────────────────────────────────────
+                                                                                 
         f.write("="*80 + "\n")
         f.write("CONFIGURATION\n")
         f.write("="*80 + "\n")
@@ -635,7 +635,7 @@ def main():
             f.write("GPU: CPU\n")
         f.write(f"Num GPUs: {num_gpus}\n\n")
 
-        # ── DETAILED TIMING LOG ────────────────────────────────────────────────
+                                                                                 
         f.write("="*80 + "\n")
         f.write("DETAILED TIMING LOG\n")
         f.write("="*80 + "\n")
@@ -661,7 +661,7 @@ def main():
                 f"{format_duration(total_pipeline_time)} "
                 f"({total_pipeline_time:.4f}s)\n\n")
 
-        # ── PER-LAYER TIMING ───────────────────────────────────────────────────
+                                                                                 
         f.write("="*80 + "\n")
         f.write("PER-LAYER PRUNING SENSITIVITY COMPUTATION TIMES\n")
         f.write("="*80 + "\n")
@@ -673,7 +673,7 @@ def main():
             f.write(f"layer_{i:<4} {lt:<16.4f} {pct:<14.2f}\n")
         f.write("\n")
 
-        # ── LAYER SENSITIVITIES (ranked high to low) ───────────────────────────
+                                                                                 
         f.write("="*80 + "\n")
         f.write("LAYER SENSITIVITIES (PRUNING-BASED -- PERPLEXITY INCREASE)\n")
         f.write("="*80 + "\n")
@@ -684,7 +684,7 @@ def main():
             f.write(f"{lname:<10} {layer_sensitivities[lname]:<22.6f} {rank_idx:<10}\n")
         f.write("\n")
 
-        # ── SENSITIVITY STATISTICS ─────────────────────────────────────────────
+                                                                                 
         f.write("="*80 + "\n")
         f.write("SENSITIVITY STATISTICS\n")
         f.write("="*80 + "\n")
@@ -693,7 +693,7 @@ def main():
         f.write(f"Max Sensitivity:  {sv.max():.6f}\n")
         f.write(f"Std Deviation:    {sv.std():.6f}\n\n")
 
-        # ── MACHINE-READABLE METRICS (KEY-VALUE) ───────────────────────────────
+                                                                                 
         f.write("="*80 + "\n")
         f.write("MACHINE-READABLE METRICS (KEY-VALUE)\n")
         f.write("="*80 + "\n")
@@ -728,7 +728,7 @@ def main():
         for i in range(num_layers):
             f.write(f"layer_{i}_time_s: {layer_times[f'layer_{i}']:.4f}\n")
 
-        # ── LAYER BIT ALLOCATION ───────────────────────────────────────────────
+                                                                                 
         f.write("\n" + "="*80 + "\n")
         f.write("LAYER BIT ALLOCATION\n")
         f.write("="*80 + "\n")
@@ -737,7 +737,7 @@ def main():
         for i in range(num_layers):
             f.write(f"  layer_{i:02d}: sensitivity={layer_sensitivities[f'layer_{i}']:.8f}\n")
 
-        # ── INTERPRETATION ─────────────────────────────────────────────────────
+                                                                                 
         f.write("\n" + "="*80 + "\n")
         f.write("INTERPRETATION\n")
         f.write("="*80 + "\n")
@@ -747,7 +747,7 @@ def main():
         f.write("sensitive to quantization. Use these sensitivities in Phase 2\n")
         f.write("to assign different bit-widths for mixed-precision quantization.\n\n")
 
-        # ── METHOD NOTES ───────────────────────────────────────────────────────
+                                                                                 
         f.write("="*80 + "\n")
         f.write("METHOD NOTES\n")
         f.write("="*80 + "\n")
@@ -774,9 +774,9 @@ def main():
 
     print(f"  Results log saved: {log_path}")
 
-    # ==========================================================================
-    # FINAL SUMMARY
-    # ==========================================================================
+                                                                                
+                   
+                                                                                
     print_section("PHASE 1 COMPLETE -- PMPQ SENSITIVITY ANALYSIS FINISHED")
     print(f"""
   Model         : {model_key} ({num_layers} layers)

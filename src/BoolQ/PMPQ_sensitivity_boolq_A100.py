@@ -1,4 +1,4 @@
-# Phase_1_PMPQ_TinyLlama_BoolQ_Sensitivity.py
+                                             
 """
 Phase 1: Pruning-Based Sensitivity Analysis for TinyLlama on BoolQ (PMPQ)
 ================================================================================
@@ -42,9 +42,9 @@ Author: Mixed-Precision Quantization Team
 Date: 2025-2026
 """
 
-# ============================================================================
-# ENVIRONMENT SETUP
-# ============================================================================
+                                                                              
+                   
+                                                                              
 import os
 
 HF_HOME = os.environ.get("HF_HOME", "/pscratch/sd/s/sreeb12/.cache/huggingface")
@@ -64,9 +64,9 @@ for p in (os.environ["HF_DATASETS_CACHE"], os.environ["HF_HUB_CACHE"]):
 
 print("Environment setup - cache:", HF_HOME)
 
-# ============================================================================
-# IMPORTS
-# ============================================================================
+                                                                              
+         
+                                                                              
 import json, time, random, argparse, warnings
 import numpy as np
 from datetime import datetime
@@ -89,9 +89,9 @@ if torch.cuda.is_available():
         props = torch.cuda.get_device_properties(i)
         print(f"  GPU {i}: {props.name}  |  {props.total_memory / 1024**3:.1f} GB")
 
-# ============================================================================
-# CONFIGURATION
-# ============================================================================
+                                                                              
+               
+                                                                              
 
 TINYLLAMA_MODELS = {
     "TinyLlama-1.1B": {
@@ -102,18 +102,18 @@ TINYLLAMA_MODELS = {
     }
 }
 
-CALIBRATION_SPLIT   = "train"   # Phase 1 always uses train split
+CALIBRATION_SPLIT   = "train"                                    
 MAX_LENGTH          = 512
-DEFAULT_GROUP_SIZE  = 128       # stored in metadata for Phase 2 reference
+DEFAULT_GROUP_SIZE  = 128                                                 
 
-# BoolQ answer tokens used for log-likelihood scoring
+                                                     
 BOOLQ_YES_TOKENS = [" yes", "yes", " Yes", "Yes"]
 BOOLQ_NO_TOKENS  = [" no",  "no",  " No",  "No"]
 
 
-# ============================================================================
-# UTILITIES
-# ============================================================================
+                                                                              
+           
+                                                                              
 
 def set_seed(seed=42):
     random.seed(seed)
@@ -153,9 +153,9 @@ def get_model_size_mb(model):
     return total / (1024 * 1024)
 
 
-# ============================================================================
-# MAGNITUDE PRUNING
-# ============================================================================
+                                                                              
+                   
+                                                                              
 
 def apply_magnitude_pruning_to_layer(layer, sparsity_level):
     """
@@ -176,7 +176,7 @@ def apply_magnitude_pruning_to_layer(layer, sparsity_level):
         sparsity_level: float (0-1) -- fraction of weights to zero out
     """
     with torch.no_grad():
-        # Collect only nn.Linear weight tensors (skip biases, LayerNorm, etc.)
+                                                                              
         linear_weights = []
         for module in layer.modules():
             if isinstance(module, nn.Linear):
@@ -185,24 +185,24 @@ def apply_magnitude_pruning_to_layer(layer, sparsity_level):
         if not linear_weights:
             return
 
-        # Build single magnitude vector across all Linear weights in this layer
+                                                                               
         all_magnitudes = torch.cat([w.data.abs().view(-1) for w in linear_weights])
         k = int(all_magnitudes.numel() * (1 - sparsity_level))
         if k == 0:
             return
 
-        # Compute one unified threshold for the entire layer
+                                                            
         threshold = torch.topk(all_magnitudes, k, largest=True)[0][-1]
 
-        # Apply mask back to each weight tensor
+                                               
         for w in linear_weights:
             mask = (w.data.abs() >= threshold).float()
             w.data *= mask
 
 
-# ============================================================================
-# BOOLQ ACCURACY EVALUATION
-# ============================================================================
+                                                                              
+                           
+                                                                              
 
 @torch.no_grad()
 def evaluate_boolq_accuracy(model, tokenizer, device,
@@ -249,13 +249,13 @@ def evaluate_boolq_accuracy(model, tokenizer, device,
 
     print(f"[{eval_name}] Evaluating {num_total} samples on {device} (batch_size={batch_size})...")
 
-    # Process in batches
+                        
     for batch_idx in range(0, num_total, batch_size):
         batch_end = min(batch_idx + batch_size, num_total)
         batch_samples = all_examples[batch_idx:batch_end]
         actual_batch_size = len(batch_samples)
 
-        # Prepare batch data
+                            
         all_texts = []
         prompt_lens = []
         answers = []
@@ -263,37 +263,37 @@ def evaluate_boolq_accuracy(model, tokenizer, device,
         for sample in batch_samples:
             passage = sample.get("passage", "")
             question = sample.get("question", "")
-            answer = sample.get("answer", False)  # True or False
+            answer = sample.get("answer", False)                 
             answers.append(answer)
 
-            # Format prompt with proper prefix
+                                              
             prompt = f"Passage: {passage}\nQuestion: {question}\nAnswer:"
 
-            # Get prompt length
+                               
             prompt_enc = tokenizer(prompt, add_special_tokens=True)
             prompt_len = len(prompt_enc["input_ids"])
             prompt_lens.append(prompt_len)
 
-            # Add both candidates for this sample (lowercase)
+                                                             
             all_texts.append(prompt + " yes")
             all_texts.append(prompt + " no")
 
-        # Tokenize entire batch (actual_batch_size × 2 texts)
+                                                             
         batch = tokenizer(all_texts, return_tensors="pt", padding=True,
                         truncation=True, max_length=max_length)
 
         input_ids = batch["input_ids"].to(device)
         attention_mask = batch["attention_mask"].to(device)
 
-        # Single forward pass for all candidates in batch (FP32)
+                                                                
         outputs = actual_model(input_ids=input_ids, attention_mask=attention_mask)
 
-        # Move logits to CPU to avoid GPU memory accumulation
+                                                             
         logits = outputs.logits.float().cpu()
         input_ids_cpu = batch["input_ids"].cpu()
         attention_mask_cpu = batch["attention_mask"].cpu()
 
-        # Score each sample (now on CPU)
+                                        
         for sample_idx in range(actual_batch_size):
             yes_idx = sample_idx * 2
             no_idx = sample_idx * 2 + 1
@@ -317,17 +317,17 @@ def evaluate_boolq_accuracy(model, tokenizer, device,
                 if valid_tokens == 0:
                     candidate_scores.append(float('-inf'))
                 else:
-                    # Average log-likelihood per token
+                                                      
                     candidate_scores.append(token_log_probs.sum().item() / valid_tokens)
 
-            # Prediction: index 0 = yes, index 1 = no
+                                                     
             pred_yes = candidate_scores[0] > candidate_scores[1]
 
-            # Ground truth: answer is boolean (True=yes, False=no)
+                                                                  
             if pred_yes == bool(answers[sample_idx]):
                 num_correct += 1
 
-        # Progress update
+                         
         if (batch_end % (batch_size * 10)) == 0 or batch_end == num_total:
             current_acc = num_correct / batch_end if batch_end > 0 else 0.0
             print(f"  Progress: {batch_end}/{num_total} samples | Accuracy: {current_acc:.4f}")
@@ -341,9 +341,9 @@ def evaluate_boolq_accuracy(model, tokenizer, device,
     return accuracy, num_correct, num_total, eval_time, throughput
 
 
-# ============================================================================
-# PMPQ SENSITIVITY COMPUTATION
-# ============================================================================
+                                                                              
+                              
+                                                                              
 
 def compute_pruning_sensitivity(model, model_name, num_layers,
                                 tokenizer, device,
@@ -376,7 +376,7 @@ def compute_pruning_sensitivity(model, model_name, num_layers,
     print(f"\nEvaluating FP32 baseline on BoolQ {CALIBRATION_SPLIT} split "
           f"(first {max_samples} samples)...")
 
-    baseline_acc, baseline_correct, baseline_total, baseline_time, baseline_tp = \
+    baseline_acc, baseline_correct, baseline_total, baseline_time, baseline_tp =\
         evaluate_boolq_accuracy(
             model, tokenizer, device,
             split=CALIBRATION_SPLIT,
@@ -405,7 +405,7 @@ def compute_pruning_sensitivity(model, model_name, num_layers,
         print(f"\n  [Layer {layer_idx:2d}/{num_layers-1}] Loading fresh model...")
         layer_t0 = time.time()
 
-        # ---- 1. Fresh model ----
+                                  
         pruned_model = AutoModelForCausalLM.from_pretrained(model_name)
 
         if torch.cuda.device_count() > 1:
@@ -413,7 +413,7 @@ def compute_pruning_sensitivity(model, model_name, num_layers,
 
         pruned_model = pruned_model.to(device)
 
-        # ---- 2. Get target layer ----
+                                       
         if hasattr(pruned_model, 'module'):
             base = pruned_model.module
         else:
@@ -424,11 +424,11 @@ def compute_pruning_sensitivity(model, model_name, num_layers,
         else:
             target_layer = base.layers[layer_idx]
 
-        # ---- 3. Prune that layer only ----
+                                            
         print(f"  [Layer {layer_idx:2d}] Applying {sparsity_level*100:.0f}% pruning...")
         apply_magnitude_pruning_to_layer(target_layer, sparsity_level)
 
-        # ---- 4. Evaluate pruned model ----
+                                            
         print(f"  [Layer {layer_idx:2d}] Evaluating accuracy...")
         pruned_acc, pruned_correct, pruned_total, _, _ = evaluate_boolq_accuracy(
             pruned_model, tokenizer, device,
@@ -439,7 +439,7 @@ def compute_pruning_sensitivity(model, model_name, num_layers,
             eval_name=f"Layer {layer_idx:2d} Pruned"
         )
 
-        # ---- 5. Sensitivity = accuracy drop ----
+                                                  
         sensitivity = baseline_acc - pruned_acc
         layer_time  = time.time() - layer_t0
 
@@ -452,7 +452,7 @@ def compute_pruning_sensitivity(model, model_name, num_layers,
               f"Sensitivity (drop): {sensitivity:.6f} | "
               f"Time: {format_duration(layer_time)}")
 
-        # ---- 6. Clean up ----
+                               
         del pruned_model
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
@@ -466,9 +466,9 @@ def compute_pruning_sensitivity(model, model_name, num_layers,
             baseline_time, baseline_tp)
 
 
-# ============================================================================
-# MAIN PIPELINE
-# ============================================================================
+                                                                              
+               
+                                                                              
 
 def main():
     parser = argparse.ArgumentParser(
@@ -509,9 +509,9 @@ def main():
     device   = pick_device()
     num_gpus = torch.cuda.device_count() if torch.cuda.is_available() else 0
 
-    # ==========================================================================
-    # STEP 1: Load Model
-    # ==========================================================================
+                                                                                
+                        
+                                                                                
     print_section("STEP 1: LOADING MODEL")
     model_key    = "TinyLlama-1.1B"
     model_config = TINYLLAMA_MODELS[model_key]
@@ -538,9 +538,9 @@ def main():
     print(f"  Loaded in : {format_duration(model_loading_time)}")
     print(f"  FP32 size : {fp32_size_mb:.2f} MB")
 
-    # ==========================================================================
-    # STEP 2: Compute Pruning Sensitivities
-    # ==========================================================================
+                                                                                
+                                           
+                                                                                
     print_section("STEP 2: COMPUTING PRUNING-BASED SENSITIVITIES")
 
     sensitivity_t0 = time.time()
@@ -559,7 +559,7 @@ def main():
     sensitivity_total_time = time.time() - sensitivity_t0
     total_pipeline_time    = time.time() - pipeline_t0
 
-    # Build sensitivity values array for stats
+                                              
     sv = np.array([layer_sensitivities[f"layer_{i}"] for i in range(num_layers)],
                   dtype=np.float32)
     ranked = sorted(range(num_layers), key=lambda i: sv[i], reverse=True)
@@ -576,9 +576,9 @@ def main():
               f"{layer_sensitivities[f'layer_{i}']:.6f}       "
               f"{layer_pruned_accs[f'layer_{i}']:.6f}")
 
-    # ==========================================================================
-    # STEP 3: Save Sensitivity JSON (for Phase 2)
-    # ==========================================================================
+                                                                                
+                                                 
+                                                                                
     print_section("STEP 3: SAVING SENSITIVITY FILES")
     os.makedirs("Sensitivities", exist_ok=True)
     timestamp     = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -629,9 +629,9 @@ def main():
 
     print(f"  Sensitivity JSON saved: {json_path}")
 
-    # ==========================================================================
-    # STEP 4: Save Full Results Log
-    # ==========================================================================
+                                                                                
+                                   
+                                                                                
     print_section("STEP 4: SAVING RESULTS LOG")
     os.makedirs("Sensitivities", exist_ok=True)
     log_filename = f"phase1_PMPQ_BoolQ_sensitivity_TinyLlama_{timestamp}.txt"
@@ -643,7 +643,7 @@ def main():
         f.write("LAYER SENSITIVITY FILE - PRUNING-BASED (PMPQ) ON BOOLQ\n")
         f.write("="*80 + "\n\n")
 
-        # CONFIGURATION
+                       
         f.write("="*80 + "\n")
         f.write("CONFIGURATION\n")
         f.write("="*80 + "\n")
@@ -673,7 +673,7 @@ def main():
             f.write("GPU: CPU\n")
         f.write(f"Num GPUs: {num_gpus}\n\n")
 
-        # DETAILED TIMING LOG
+                             
         f.write("="*80 + "\n")
         f.write("DETAILED TIMING LOG\n")
         f.write("="*80 + "\n")
@@ -699,7 +699,7 @@ def main():
                 f"{format_duration(total_pipeline_time)} "
                 f"({total_pipeline_time:.4f}s)\n\n")
 
-        # PER-LAYER TIMING
+                          
         f.write("="*80 + "\n")
         f.write("PER-LAYER PRUNING SENSITIVITY COMPUTATION TIMES\n")
         f.write("="*80 + "\n")
@@ -711,7 +711,7 @@ def main():
             f.write(f"layer_{i:<4} {lt:<16.4f} {pct:<14.2f}\n")
         f.write("\n")
 
-        # LAYER SENSITIVITIES (ranked high to low)
+                                                  
         f.write("="*80 + "\n")
         f.write("LAYER SENSITIVITIES (PRUNING-BASED -- ACCURACY DROP)\n")
         f.write("="*80 + "\n")
@@ -727,7 +727,7 @@ def main():
                     f"{baseline_acc:<16.6f}\n")
         f.write("\n")
 
-        # SENSITIVITY STATISTICS
+                                
         f.write("="*80 + "\n")
         f.write("SENSITIVITY STATISTICS\n")
         f.write("="*80 + "\n")
@@ -736,7 +736,7 @@ def main():
         f.write(f"Max Sensitivity:  {sv.max():.6f}\n")
         f.write(f"Std Deviation:    {sv.std():.6f}\n\n")
 
-        # MACHINE-READABLE METRICS (KEY-VALUE)
+                                              
         f.write("="*80 + "\n")
         f.write("MACHINE-READABLE METRICS (KEY-VALUE)\n")
         f.write("="*80 + "\n")
@@ -774,7 +774,7 @@ def main():
         for i in range(num_layers):
             f.write(f"layer_{i}_time_s: {layer_times[f'layer_{i}']:.4f}\n")
 
-        # LAYER BIT ALLOCATION (pre-assignment notes)
+                                                     
         f.write("\n" + "="*80 + "\n")
         f.write("LAYER BIT ALLOCATION\n")
         f.write("="*80 + "\n")
@@ -784,7 +784,7 @@ def main():
             f.write(f"  layer_{i:02d}: sensitivity={layer_sensitivities[f'layer_{i}']:.8f}  "
                     f"pruned_acc={layer_pruned_accs[f'layer_{i}']:.6f}\n")
 
-        # INTERPRETATION
+                        
         f.write("\n" + "="*80 + "\n")
         f.write("INTERPRETATION\n")
         f.write("="*80 + "\n")
@@ -794,7 +794,7 @@ def main():
         f.write("sensitive to quantization. Use these sensitivities in Phase 2\n")
         f.write("to assign different bit-widths for mixed-precision quantization.\n\n")
 
-        # METHOD NOTES
+                      
         f.write("="*80 + "\n")
         f.write("METHOD NOTES\n")
         f.write("="*80 + "\n")
@@ -831,9 +831,9 @@ def main():
 
     print(f"  Results log saved: {log_path}")
 
-    # ==========================================================================
-    # FINAL SUMMARY
-    # ==========================================================================
+                                                                                
+                   
+                                                                                
     print_section("PHASE 1 COMPLETE -- PMPQ SENSITIVITY ANALYSIS FINISHED")
     print(f"""
   Model         : {model_key} ({num_layers} layers)

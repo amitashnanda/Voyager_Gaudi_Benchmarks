@@ -1,4 +1,4 @@
-# Phase_2_evaluate_GroupWise_TinyLlama_HellaSwag_REAL.py
+                                                        
 """
 Phase 2: Group-Wise REAL Quantization & Evaluation for TinyLlama on HellaSwag
 ===============================================================================
@@ -37,9 +37,9 @@ Author: Mixed-Precision Quantization Team
 Date: 2025-2026
 """
 
-# ============================================================================
-# ENVIRONMENT SETUP
-# ============================================================================
+                                                                              
+                   
+                                                                              
 import os
 
 HF_HOME = os.environ.get("HF_HOME", "/pscratch/sd/s/sreeb12/.cache/huggingface")
@@ -50,14 +50,14 @@ os.environ.update({
     "HF_DATASETS_CACHE":     os.path.join(HF_HOME, "datasets"),
     "HF_HUB_CACHE":          os.path.join(HF_HOME, "hub"),
     "TOKENIZERS_PARALLELISM": "false",
-    "CUDA_VISIBLE_DEVICES":  os.environ.get("CUDA_VISIBLE_DEVICES", "0"),  # Single GPU for better performance
+    "CUDA_VISIBLE_DEVICES":  os.environ.get("CUDA_VISIBLE_DEVICES", "0"),                                     
 })
 
 print("Environment setup - cache:", HF_HOME)
 
-# ============================================================================
-# IMPORTS
-# ============================================================================
+                                                                              
+         
+                                                                              
 import json, time, random, warnings, re
 import numpy as np
 from datetime import datetime
@@ -83,13 +83,13 @@ if torch.cuda.is_available():
         props = torch.cuda.get_device_properties(i)
         print(f"  GPU {i}: {props.name}  |  {props.total_memory / 1024**3:.1f} GB")
 
-# ============================================================================
-# CONFIGURATION
-# ============================================================================
+                                                                              
+               
+                                                                              
 
 DEFAULT_GROUP_SIZE  = 128
-MAX_LENGTH          = 2048  # max tokenization length (matches fake quant script)
-BATCH_SIZE          = 64    # batch size for evaluation (matches fake quant script)
+MAX_LENGTH          = 2048                                                       
+BATCH_SIZE          = 64                                                           
 BASELINE_CACHE_DIR  = "Models"
 BASELINE_CACHE_FILE = os.path.join(BASELINE_CACHE_DIR, "baseline_hellaswag_fp32.json")
 
@@ -102,14 +102,14 @@ TINYLLAMA_MODELS = {
     }
 }
 
-# Only these two are genuinely supported in pure PyTorch on A100:
-#   bits >= 16  ->  FP16 (torch.float16)
-#   bits <  16  ->  INT8 (torch.int8 + group-wise FP16 scales)
+                                                                 
+                                        
+                                                              
 
 
-# ============================================================================
-# UTILITIES
-# ============================================================================
+                                                                              
+           
+                                                                              
 
 def set_seed(seed=42):
     random.seed(seed)
@@ -188,9 +188,9 @@ def get_model_size_mb(model):
     return total / (1024 * 1024)
 
 
-# ============================================================================
-# BASELINE CACHE
-# ============================================================================
+                                                                              
+                
+                                                                              
 
 def load_baseline_cache():
     if not os.path.exists(BASELINE_CACHE_FILE):
@@ -219,7 +219,7 @@ def extract_baseline_from_fake_quant_log(log_file_path):
         with open(log_file_path, "r") as f:
             content = f.read()
 
-        # Look for the METRICS BEFORE QUANTIZATION section
+                                                          
         before_section = re.search(
             r"METRICS BEFORE QUANTIZATION.*?(?=\n={40,}|\Z)",
             content,
@@ -232,7 +232,7 @@ def extract_baseline_from_fake_quant_log(log_file_path):
 
         section_text = before_section.group(0)
 
-        # Extract accuracy
+                          
         acc_match = re.search(r"HellaSwag Accuracy:\s*(\d+\.\d+)", section_text)
         if acc_match:
             accuracy = float(acc_match.group(1))
@@ -240,7 +240,7 @@ def extract_baseline_from_fake_quant_log(log_file_path):
             print("  Could not extract accuracy from log")
             return None
 
-        # Extract correct/total
+                               
         correct_match = re.search(r"Correct:\s*(\d+)/(\d+)", section_text)
         if correct_match:
             correct = int(correct_match.group(1))
@@ -249,7 +249,7 @@ def extract_baseline_from_fake_quant_log(log_file_path):
             print("  Could not extract correct/total from log")
             return None
 
-        # Extract eval time (convert to seconds)
+                                                
         time_match = re.search(r"Eval Time:\s*(?:(\d+)m\s*)?(\d+\.?\d*)s", section_text)
         if time_match:
             minutes = int(time_match.group(1)) if time_match.group(1) else 0
@@ -259,18 +259,18 @@ def extract_baseline_from_fake_quant_log(log_file_path):
             print("  Could not extract eval time from log")
             eval_time = 0.0
 
-        # Extract throughput
+                            
         throughput_match = re.search(r"Throughput:\s*(\d+\.?\d*)\s*examples/s", section_text)
         if throughput_match:
             throughput = float(throughput_match.group(1))
         else:
             throughput = total / eval_time if eval_time > 0 else 0.0
 
-        # Extract model info if available
+                                         
         model_match = re.search(r"Model:\s*([^\n]+)", content)
         model_name = model_match.group(1).strip() if model_match else "TinyLlama-1.1B"
 
-        # Extract timestamp from filename
+                                         
         timestamp_match = re.search(r"(\d{8}_\d{6})", log_file_path)
         timestamp = timestamp_match.group(1) if timestamp_match else datetime.now().strftime("%Y%m%d_%H%M%S")
 
@@ -301,16 +301,16 @@ def find_latest_fake_quant_log(eval_dir="Evaluation"):
     if not os.path.exists(eval_dir):
         return None
 
-    # Look for fake quantization evaluation log files
+                                                     
     log_files = list(Path(eval_dir).glob("fake_quant_eval_*.txt"))
 
     if not log_files:
         return None
 
-    # Sort by modification time to get the latest
+                                                 
     log_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
 
-    # Return the most recent one
+                                
     return str(log_files[0])
 
 
@@ -338,9 +338,9 @@ def save_baseline_cache(acc, correct, total, eval_time, throughput,
     print(f"  Baseline results saved to: {BASELINE_CACHE_FILE}")
 
 
-# ============================================================================
-# CLUSTERING
-# ============================================================================
+                                                                              
+            
+                                                                              
 
 def kmeans_clustering(sensitivities, n_clusters=3):
     values = sensitivities.reshape(-1, 1)
@@ -377,9 +377,9 @@ def percentile_clustering(sensitivities, n_clusters=3):
     return labels, means
 
 
-# ============================================================================
-# REAL QUANTIZATION -- FP16 and INT8 ONLY
-# ============================================================================
+                                                                              
+                                         
+                                                                              
 
 class RealQuantizedLinearGroupWise(nn.Module):
     """
@@ -499,9 +499,9 @@ def quantize_model_real(model, layer_bits_map, group_size=128):
     return model, total_orig, total_quant
 
 
-# ============================================================================
-# HELLASWAG EVALUATION -- BATCHED (matches fake quantization script)
-# ============================================================================
+                                                                              
+                                                                    
+                                                                              
 
 def preprocess_hellaswag_text(text):
     """Clean up HellaSwag text artifacts from WikiHow portion."""
@@ -538,13 +538,13 @@ def evaluate_hellaswag(model, tokenizer, device,
 
     print(f"[{eval_name}] Evaluating {total} samples on {device} (batch_size={batch_size})...")
 
-    # Process in batches
+                        
     for batch_start in range(0, total, batch_size):
         batch_end = min(batch_start + batch_size, total)
         batch_samples = [samples[i] for i in range(batch_start, batch_end)]
         actual_batch_size = len(batch_samples)
 
-        # Prepare all texts and metadata for this batch
+                                                       
         all_texts = []
         ctx_lens = []
         labels = []
@@ -555,32 +555,32 @@ def evaluate_hellaswag(model, tokenizer, device,
             label = int(sample["label"])
             labels.append(label)
 
-            # Get context length
+                                
             ctx_enc = tokenizer(ctx, add_special_tokens=True)
             ctx_len = len(ctx_enc["input_ids"])
             ctx_lens.append(ctx_len)
 
-            # Add all 4 candidate endings for this sample
+                                                         
             for ending in endings:
                 all_texts.append(ctx + " " + ending)
 
-        # Tokenize entire batch (actual_batch_size × 4 texts)
+                                                             
         batch = tokenizer(all_texts, return_tensors="pt", padding=True,
                         truncation=True, max_length=max_length)
 
         input_ids = batch["input_ids"].to(device)
         attention_mask = batch["attention_mask"].to(device)
 
-        # Single forward pass for all candidates in batch
+                                                         
         with autocast(dtype=torch.float16):
             outputs = actual_model(input_ids, attention_mask=attention_mask)
 
-        # Move to CPU for log-likelihood computation
+                                                    
         logits = outputs.logits.float().cpu()
         input_ids_cpu = batch["input_ids"]
         attn_cpu = batch["attention_mask"]
 
-        # Compute log-likelihood scores for each ending
+                                                       
         for sample_idx in range(actual_batch_size):
             ctx_len = ctx_lens[sample_idx]
             label = labels[sample_idx]
@@ -592,13 +592,13 @@ def evaluate_hellaswag(model, tokenizer, device,
                 seq_ids = input_ids_cpu[idx]
                 seq_mask = attn_cpu[idx]
 
-                # Compute log-likelihood for ending tokens only
+                                                               
                 ending_start = ctx_len
-                ending_logits = seq_logits[ending_start - 1 : -1]  # shift for CE
+                ending_logits = seq_logits[ending_start - 1 : -1]                
                 ending_ids = seq_ids[ending_start:]
                 ending_mask = seq_mask[ending_start:]
 
-                # Length-normalized log-likelihood
+                                                  
                 log_probs = torch.nn.functional.log_softmax(ending_logits, dim=-1)
                 token_log_probs = log_probs[range(len(ending_ids)), ending_ids]
                 token_log_probs = token_log_probs * ending_mask.float()
@@ -611,12 +611,12 @@ def evaluate_hellaswag(model, tokenizer, device,
 
                 scores.append(score)
 
-            # Pick ending with highest score
+                                            
             pred = int(np.argmax(scores))
             if pred == label:
                 correct += 1
 
-        # Progress update
+                         
         if (batch_end % (batch_size * 10)) == 0 or batch_end == total:
             current_acc = correct / batch_end if batch_end > 0 else 0.0
             print(f"  Progress: {batch_end}/{total} samples | Accuracy: {current_acc:.4f}")
@@ -629,9 +629,9 @@ def evaluate_hellaswag(model, tokenizer, device,
     return accuracy, correct, total, eval_time
 
 
-# ============================================================================
-# MAIN PIPELINE
-# ============================================================================
+                                                                              
+               
+                                                                              
 
 def main():
     print_section(
@@ -660,9 +660,9 @@ def main():
     num_gpus = torch.cuda.device_count() if torch.cuda.is_available() else 0
     print(f"  Device: {device}  |  GPUs: {num_gpus}")
 
-    # ==========================================================================
-    # STEP 1: Load Sensitivity File
-    # ==========================================================================
+                                                                                
+                                   
+                                                                                
     print_section("STEP 1: LOAD SENSITIVITY FILE")
     t0 = time.time()
 
@@ -729,9 +729,9 @@ def main():
     )
     print(f"  Sensitivity method detected: {sensitivity_method}")
 
-    # ==========================================================================
-    # STEP 2: Load Model
-    # ==========================================================================
+                                                                                
+                        
+                                                                                
     print_section("STEP 2: LOADING MODEL")
     t0 = time.time()
 
@@ -749,9 +749,9 @@ def main():
     print(f"  Model loaded in {format_duration(timing_log['model_loading_time_s'])}")
     print(f"  FP32 size (CPU): {fp32_size_mb:.2f} MB")
 
-    # ==========================================================================
-    # STEP 3: Clustering
-    # ==========================================================================
+                                                                                
+                        
+                                                                                
     print_section("STEP 3: CLUSTERING CONFIGURATION")
     t0 = time.time()
 
@@ -784,9 +784,9 @@ def main():
         lids = [i for i in range(num_layers) if labels[i] == cid]
         print(f"  Cluster {cid}: {len(lids)} layers (mean sensitivity: {cmean:.4f})")
 
-    # ==========================================================================
-    # STEP 4: Bit-Width Allocation -- FP16 and INT8 ONLY
-    # ==========================================================================
+                                                                                
+                                                        
+                                                                                
     print_section("STEP 4: BIT-WIDTH ALLOCATION")
     print("  REAL QUANTIZATION supports only FP16 and INT8 (pure PyTorch on A100).")
     print("  FP16 (16-bit) -> torch.float16 -- 2x memory savings")
@@ -880,9 +880,9 @@ def main():
         rt = "FP16" if b >= 16 else "INT8"
         print(f"    Layer {i:2d}: {b:2d}-bit [{rt}]  (sensitivity: {sens_values[i]:.4f})")
 
-    # ==========================================================================
-    # STEP 5: FP32 Baseline (optional - loads from cache or fake quant log)
-    # ==========================================================================
+                                                                                
+                                                                           
+                                                                                
     cached_baseline = load_baseline_cache()
     fake_quant_log = find_latest_fake_quant_log()
 
@@ -928,8 +928,8 @@ def main():
     acc_before = correct_before = total_before = fp32_throughput = None
     baseline_source = "computed"
 
-    # Move model to GPU for baseline
-    # Note: DataParallel removed for better performance on single GPU
+                                    
+                                                                     
     model = model.to(device)
 
     if run_bl:
@@ -971,7 +971,7 @@ def main():
             print(f"  Throughput: {fp32_throughput:.2f} examples/s")
             print(f"  Source    : {fake_baseline['source_file']}")
 
-            # Save to cache for future use
+                                          
             save_baseline_cache(
                 acc_before, correct_before, total_before,
                 fake_baseline["eval_time_s"], fp32_throughput,
@@ -996,14 +996,14 @@ def main():
             print("  Please run the fake quant script first or enable baseline evaluation.")
             timing_log["fp32_evaluation_time_s"] = 0.0
 
-    # ==========================================================================
-    # STEP 6: Apply REAL Quantization
-    # ==========================================================================
+                                                                                
+                                     
+                                                                                
     print_section("STEP 6: APPLYING REAL GROUP-WISE MIXED-PRECISION QUANTIZATION")
     print(f"  Mode: REAL weight storage -- FP16 or INT8 -- group_size={group_size}")
     print(f"  Quantization runs on CPU then model moves to GPU\n")
 
-    # Move to CPU for clean quantization
+                                        
     model = model.cpu()
 
     tq0 = time.time()
@@ -1031,9 +1031,9 @@ def main():
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
 
-    # ==========================================================================
-    # STEP 7: Evaluate Real-Quantized Model
-    # ==========================================================================
+                                                                                
+                                           
+                                                                                
     print_section("STEP 7: EVALUATING REAL-QUANTIZED MODEL ON HELLASWAG")
     print(f"  Batched evaluation (batch_size={BATCH_SIZE}) -- single GPU mode\n")
 
@@ -1051,9 +1051,9 @@ def main():
     print(f"  Time      : {format_duration(timing_log['quantized_evaluation_time_s'])}")
     print(f"  Throughput: {quant_throughput:.2f} examples/s")
 
-    # ==========================================================================
-    # STEP 8: Performance Analysis
-    # ==========================================================================
+                                                                                
+                                  
+                                                                                
     print_section("STEP 8: PERFORMANCE COMPARISON")
     timing_log["total_pipeline_time_s"] = time.time() - pipeline_start_time
 
@@ -1113,9 +1113,9 @@ def main():
   GPUs used                 : {num_gpus}
 """)
 
-    # ==========================================================================
-    # STEP 9: Save Real-Quantized Model (.bin HuggingFace format)
-    # ==========================================================================
+                                                                                
+                                                                 
+                                                                                
     print_section("STEP 9: SAVING REAL-QUANTIZED MODEL")
     os.makedirs("Models", exist_ok=True)
     alloc_str      = "-".join(str(b) for b in cluster_bits)
@@ -1126,7 +1126,7 @@ def main():
     model_save_path = os.path.join("Models", model_dir_name)
     os.makedirs(model_save_path, exist_ok=True)
 
-    actual_model = model  # No DataParallel, model is used directly
+    actual_model = model                                           
 
     hf_config  = AutoConfig.from_pretrained(model_name)
     save_model = AutoModelForCausalLM.from_config(hf_config)
@@ -1186,9 +1186,9 @@ def main():
     print(f"  Note: .bin weights are FP32 (HuggingFace standard format).")
     print(f"  Reload + re-run quantize_model_real() to restore FP16/INT8 inference.")
 
-    # ==========================================================================
-    # STEP 10: Save Results Log
-    # ==========================================================================
+                                                                                
+                               
+                                                                                
     print_section("STEP 10: SAVING RESULTS LOG")
     os.makedirs("Evaluation", exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -1206,7 +1206,7 @@ def main():
         f.write(f"TinyLlama on HellaSwag Validation Set\n")
         f.write("="*80 + "\n\n")
 
-        # CONFIGURATION
+                       
         f.write("="*80 + "\n")
         f.write("CONFIGURATION\n")
         f.write("="*80 + "\n")
@@ -1247,7 +1247,7 @@ def main():
         f.write(f"Timestamp: {timestamp}\n")
         f.write(f"Saved Model Folder: {model_save_path}\n\n")
 
-        # COMPREHENSIVE TIMING LOG
+                                  
         f.write("="*80 + "\n")
         f.write("COMPREHENSIVE TIMING LOG\n")
         f.write("="*80 + "\n")
@@ -1279,7 +1279,7 @@ def main():
                     f"({phase1_sensitivity_time:.4f}s)\n")
         f.write("\n")
 
-        # METRICS BEFORE QUANTIZATION (FP32 Baseline)
+                                                     
         f.write("="*80 + "\n")
         f.write("METRICS BEFORE QUANTIZATION (FP32 Baseline)\n")
         f.write("="*80 + "\n")
@@ -1296,7 +1296,7 @@ def main():
             f.write("FP32 BASELINE -- NOT AVAILABLE "
                     "(no cache, skip selected)\n\n")
 
-        # METRICS AFTER QUANTIZATION
+                                    
         f.write("="*80 + "\n")
         f.write("METRICS AFTER QUANTIZATION "
                 "(Group-Wise Real Mixed-Precision PTQ)\n")
@@ -1308,7 +1308,7 @@ def main():
                 f"{format_duration(timing_log['quantized_evaluation_time_s'])}\n")
         f.write(f"Throughput: {quant_throughput:.2f} examples/s\n\n")
 
-        # PERFORMANCE COMPARISON
+                                
         f.write("="*80 + "\n")
         f.write("PERFORMANCE COMPARISON\n")
         f.write("="*80 + "\n")
@@ -1318,7 +1318,7 @@ def main():
         else:
             f.write("Not available (no baseline)\n\n")
 
-        # COMPRESSION METRICS
+                             
         f.write("="*80 + "\n")
         f.write("COMPRESSION METRICS\n")
         f.write("="*80 + "\n")
@@ -1335,7 +1335,7 @@ def main():
         f.write(f"Size Reduction: {reduction_pct:.2f}%\n")
         f.write(f"Quantization Time: {quantize_time_s:.4f}s\n\n")
 
-        # MACHINE-READABLE METRICS (KEY-VALUE)
+                                              
         f.write("="*80 + "\n")
         f.write("MACHINE-READABLE METRICS (KEY-VALUE)\n")
         f.write("="*80 + "\n")
@@ -1384,7 +1384,7 @@ def main():
             f.write(f"phase1_sensitivity_time_s: "
                     f"{phase1_sensitivity_time:.4f}\n")
 
-        # LAYER BIT ALLOCATION
+                              
         f.write("\n" + "="*80 + "\n")
         f.write("LAYER BIT ALLOCATION\n")
         f.write("="*80 + "\n")
@@ -1394,7 +1394,7 @@ def main():
             f.write(f"  layer_{i:02d}: {b:2d}-bit [{rt}]  "
                     f"sensitivity: {sens_values[i]:.6f}\n")
 
-        # METHOD NOTES
+                      
         f.write("\n" + "="*80 + "\n")
         f.write("METHOD NOTES\n")
         f.write("="*80 + "\n")

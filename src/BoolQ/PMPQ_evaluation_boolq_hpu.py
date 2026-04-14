@@ -41,7 +41,7 @@ Author: Mixed-Precision Quantization Team
 Date: 2025
 """
 
-# ENVIRONMENT SETUP
+                   
 
 
 import os
@@ -96,10 +96,10 @@ warnings.filterwarnings('ignore')
 LOG_DIR_BASE = "/voyager/ceph/users/ananda2/Quantization/logs"
 os.makedirs(LOG_DIR_BASE, exist_ok=True)
 
-# Constants for BoolQ evaluation
-MAX_LENGTH = 512  # Appropriate for BoolQ's shorter passages
+                                
+MAX_LENGTH = 512                                            
 
-# LOGGING SETUP
+               
 
 
 def setup_logging(rank=0, log_dir=None):
@@ -131,7 +131,7 @@ def setup_logging(rank=0, log_dir=None):
     return logger
 
 
-# MODEL CONFIGURATIONS
+                      
 
 
 TINYLLAMA_MODELS = {
@@ -146,7 +146,7 @@ TINYLLAMA_MODELS = {
 DEFAULT_GROUP_SIZE = 128
 
 
-# UTILITY FUNCTIONS
+                   
 
 
 def get_rank():
@@ -237,7 +237,7 @@ def log_hpu_status(logger):
 
 
 
-# CLUSTERING STRATEGIES (CPU — sklearn)
+                                       
 
 
 def kmeans_clustering(sensitivities, n_clusters=3):
@@ -277,7 +277,7 @@ def percentile_clustering(sensitivities, n_clusters=3):
 
 
 
-# QUANTIZATION - GROUP-WISE SCALES (CPU — weight manipulation)
+                                                              
 
 
 class LinearSymmetricGroupQuant(nn.Module):
@@ -307,14 +307,14 @@ class LinearSymmetricGroupQuant(nn.Module):
         else:
             self.register_buffer("bias", None)
 
-        # Verify quantization actually changed the weights (for debugging)
+                                                                          
         if self.nbits_w < 32:
             diff = (quantized_weight - original_weight).abs().mean().item()
             rel_diff = diff / (original_weight.abs().mean().item() + 1e-8)
             if diff < 1e-8:
                 import warnings
                 warnings.warn(f"Quantization to {nbits_w} bits did not change weights! Diff: {diff:.2e}")
-            # Store metrics for logging
+                                       
             self._quant_diff = diff
             self._quant_rel_diff = rel_diff
 
@@ -333,12 +333,12 @@ class LinearSymmetricGroupQuant(nn.Module):
         qmin = -(2 ** (self.nbits_w - 1))
         qmax = (2 ** (self.nbits_w - 1)) - 1
         max_val = weight_grouped.abs().amax(dim=-1, keepdim=True)
-        # Handle zero groups - don't quantize them
+                                                  
         non_zero_mask = (max_val > 1e-8)
         scale = torch.where(non_zero_mask, max_val / qmax, torch.ones_like(max_val))
         scale = torch.clamp(scale, min=1e-8)
 
-        # Quantize only non-zero groups
+                                       
         q = torch.where(non_zero_mask, torch.round(weight_grouped / scale), weight_grouped)
         q = torch.clamp(q, qmin, qmax)
         weight_quantized = q * scale
@@ -400,13 +400,13 @@ def quantize_model_layers(model, layer_bits_map, group_size=128, rank=0, logger=
         if hasattr(wrapper, '_quant_diff'):
             quantization_stats.append((qualname, nbits, wrapper._quant_diff, wrapper._quant_rel_diff))
         if rank == 0 and logger and qualname.endswith(".self_attn.q_proj"):
-            # Log sample layer to verify quantization
+                                                     
             if hasattr(wrapper, '_quant_diff'):
                 logger.info(f"    Quantized {qualname} to {nbits} bits (diff: {wrapper._quant_diff:.3e}, rel: {wrapper._quant_rel_diff:.3%})")
             else:
                 logger.info(f"    Quantized {qualname} to {nbits} bits")
 
-    # Log summary statistics
+                            
     if rank == 0 and logger and quantization_stats:
         avg_diff = sum(s[2] for s in quantization_stats) / len(quantization_stats)
         avg_rel_diff = sum(s[3] for s in quantization_stats) / len(quantization_stats)
@@ -416,7 +416,7 @@ def quantize_model_layers(model, layer_bits_map, group_size=128, rank=0, logger=
 
 
 
-# BOOLQ DATASET & EVALUATION
+                            
 
 
 def load_boolq_dataset(split="validation"):
@@ -462,13 +462,13 @@ def evaluate_boolq_accuracy(model, dataset, tokenizer, logger,
     t0 = time.time()
 
     with torch.no_grad():
-        # Process in batches
+                            
         for batch_start in range(0, total, batch_size):
             batch_end = min(batch_start + batch_size, total)
             batch_samples = [samples[i] for i in range(batch_start, batch_end)]
             actual_batch_size = len(batch_samples)
 
-            # Prepare all texts and metadata for this batch
+                                                           
             all_texts = []
             prompt_lens = []
             labels = []
@@ -476,42 +476,42 @@ def evaluate_boolq_accuracy(model, dataset, tokenizer, logger,
             for sample in batch_samples:
                 passage = sample["passage"]
                 question = sample["question"]
-                answer = sample["answer"]  # True or False
+                answer = sample["answer"]                 
                 labels.append(answer)
 
-                # Format prompt with proper prefix
+                                                  
                 prompt = f"Passage: {passage}\nQuestion: {question}\nAnswer:"
                 prompt_enc = tokenizer(prompt, add_special_tokens=True)
                 prompt_len = len(prompt_enc["input_ids"])
                 prompt_lens.append(prompt_len)
 
-                # Add both yes and no options for this sample (lowercase)
+                                                                         
                 all_texts.append(prompt + " yes")
                 all_texts.append(prompt + " no")
 
-            # Tokenize entire batch (actual_batch_size × 2 texts: yes/no per sample)
+                                                                                    
             batch = tokenizer(all_texts, return_tensors="pt", padding=True,
                               truncation=True, max_length=MAX_LENGTH)
 
             input_ids = batch["input_ids"].to(device)
             attention_mask = batch["attention_mask"].to(device)
 
-            # Single forward pass for all yes/no pairs in batch
+                                                               
             outputs = model(input_ids, attention_mask=attention_mask)
             htcore.mark_step()
 
-            # Move to CPU for log-likelihood computation
+                                                        
             logits = outputs.logits.float().cpu()
             input_ids_cpu = batch["input_ids"]
             attn_cpu = batch["attention_mask"]
 
-            # Process each sample in the batch
+                                              
             for idx in range(actual_batch_size):
                 prompt_len = prompt_lens[idx]
                 lls = []
 
-                # Compare yes vs no for this sample
-                for j in range(2):  # 0=yes, 1=no
+                                                   
+                for j in range(2):               
                     text_idx = idx * 2 + j
                     seq_len = int(attn_cpu[text_idx].sum().item())
                     ans_len = seq_len - prompt_len
@@ -520,23 +520,23 @@ def evaluate_boolq_accuracy(model, dataset, tokenizer, logger,
                         lls.append(float("-inf"))
                         continue
 
-                    # Log-likelihood of answer tokens only
+                                                          
                     shift_logits = logits[text_idx, prompt_len - 1 : seq_len - 1, :]
                     shift_labels = input_ids_cpu[text_idx, prompt_len : seq_len]
 
                     log_probs = torch.nn.functional.log_softmax(shift_logits, dim=-1)
                     token_lps = log_probs.gather(1, shift_labels.unsqueeze(1)).squeeze(1)
 
-                    # Length-normalized average
+                                               
                     avg_ll = token_lps.sum().item() / ans_len
                     lls.append(avg_ll)
 
-                # Predict: True if P(yes) > P(no), else False
+                                                             
                 predicted = (lls[0] > lls[1])
                 if predicted == labels[idx]:
                     correct += 1
 
-            # Progress logging
+                              
             if rank == 0 and (batch_end % 500 == 0 or batch_end == total):
                 logger.info(f"  [{eval_name}] {batch_end}/{total}: "
                              f"acc={correct/batch_end*100:.2f}%")
@@ -547,7 +547,7 @@ def evaluate_boolq_accuracy(model, dataset, tokenizer, logger,
     if rank == 0:
         logger.info(f"[{eval_name}] Final: {accuracy:.2f}% ({correct}/{total}), time={eval_time:.1f}s")
 
-    # Cleanup — move model back to CPU, free HPU memory
+                                                       
     model.to("cpu")
     free_hpu_memory()
 
@@ -561,7 +561,7 @@ def evaluate_boolq_accuracy(model, dataset, tokenizer, logger,
 
 
 
-# MAIN PIPELINE
+               
 
 
 def main():
@@ -579,7 +579,7 @@ def main():
     world_size = get_world_size()
     set_seed(42)
 
-    # ========== Gaudi Version Selection ==========
+                                                   
     if rank == 0:
         if args.gaudi_version:
             gaudi_version = args.gaudi_version
@@ -650,13 +650,13 @@ def main():
 
     print_section("PHASE 2: PMPQ EVALUATION (BoolQ) - Gaudi HPU", rank)
 
-    # ========== STEP 1-4: Interactive config on rank 0, then broadcast ==========
+                                                                                  
     if rank == 0:
-        # STEP 1: Load Sensitivity File
+                                       
         print_section("STEP 1: LOAD PRUNING SENSITIVITY FILE", rank)
         sens_dir = Path(os.path.join("Sensitivities", gaudi_version))
         if not sens_dir.exists():
-            # Fall back to base Sensitivities/ if Gaudi subfolder doesn't exist
+                                                                               
             sens_dir = Path("Sensitivities")
         if not sens_dir.exists():
             logger.error(f"'Sensitivities/{gaudi_version}' folder not found! Run Phase 1 first.")
@@ -665,7 +665,7 @@ def main():
                 dist.destroy_process_group()
             return
 
-        # Look for BoolQ sensitivity files specifically
+                                                       
         sens_files = list(sens_dir.glob("sens_*BoolQ*.json"))
         if not sens_files:
             sens_files = list(sens_dir.glob("sens_*.json"))
@@ -694,7 +694,7 @@ def main():
         logger.info(f"  Layers: {num_layers}")
         logger.info(f"  Sensitivity range: [{sens_values.min():.4f}, {sens_values.max():.4f}]")
 
-        # Detect model
+                      
         model_key = None
         for key, config in TINYLLAMA_MODELS.items():
             if config["num_layers"] == num_layers:
@@ -704,7 +704,7 @@ def main():
             model_key = "TinyLlama-1.1B"
         model_name = TINYLLAMA_MODELS[model_key]["model_name"]
 
-        # STEP 3: Clustering
+                            
         print_section("STEP 3: CLUSTERING CONFIGURATION", rank)
         clustering_choice = prompt_user(
             "Select clustering strategy:",
@@ -730,7 +730,7 @@ def main():
             labels, cluster_means = hierarchical_clustering(sens_values, n_clusters=n_clusters)
             strategy_name = "hierarchical"
 
-        # STEP 4: Bit Allocation
+                                
         print_section("STEP 4: BIT-WIDTH ALLOCATION", rank)
         if n_clusters == 3:
             bit_options = [
@@ -766,7 +766,7 @@ def main():
             match = re.search(r'\[.*?\]', bit_choice)
             cluster_bits = ast.literal_eval(match.group())
 
-        # Group size
+                    
         group_size_choice = prompt_user(
             "Select quantization group size:",
             ["128 (standard, same as GPTQ)", "64 (finer granularity)", "32 (finest)"],
@@ -779,7 +779,7 @@ def main():
         else:
             group_size = 128
 
-        # Build layer_bits_map
+                              
         layer_bits_map = {}
         for i in range(num_layers):
             cluster_id = labels[i]
@@ -816,7 +816,7 @@ def main():
             dist.destroy_process_group()
         return
 
-    # Unpack config
+                   
     selected_file = config['selected_file']
     num_layers = config['num_layers']
     sens_values = np.array(config['sens_values'], dtype=np.float32)
@@ -830,7 +830,7 @@ def main():
     labels = np.array(config['labels'])
     cluster_means = config['cluster_means']
 
-    # ========== STEP 2: Load Tokenizer ==========
+                                                  
     print_section("STEP 2: LOADING TOKENIZER", rank)
     if rank == 0:
         logger.info(f"Loading tokenizer for {model_key} from {model_name}...")
@@ -842,7 +842,7 @@ def main():
     if rank == 0:
         logger.info(f"  Tokenizer vocab: {tokenizer.vocab_size}")
 
-    # ========== Load BoolQ Dataset ==========
+                                              
     if rank == 0:
         logger.info("Loading BoolQ dataset...")
     dataset = load_boolq_dataset(split="validation")
@@ -851,7 +851,7 @@ def main():
         logger.info(f"BoolQ validation: {len(dataset)} samples")
         logger.info(f"  Official TinyLlama score: 57.83 (accuracy)")
 
-    # ========== STEP 5: Evaluate FP32 Baseline ==========
+                                                          
     print_section("STEP 5: EVALUATING FP32 BASELINE (HPU)", rank)
     if rank == 0:
         logger.info("Loading BASELINE model (separate from quantized model)...")
@@ -868,15 +868,15 @@ def main():
         batch_size=args.batch_size
     )
 
-    # Calculate baseline throughput
+                                   
     num_samples = len(dataset)
-    throughput_before = num_samples / eval_time_before  # samples/second
+    throughput_before = num_samples / eval_time_before                  
 
     if rank == 0:
         logger.info(f"FP32 Baseline: Accuracy = {acc_before:.2f}% ({eval_time_before:.1f}s)")
         logger.info(f"               Throughput = {throughput_before:.2f} samples/s")
 
-    # Save baseline model
+                         
     MODELS_DIR = "/voyager/ceph/users/ananda2/Quantization/Models"
     baseline_save_dir = os.path.join(MODELS_DIR, f"{model_key}_baseline")
     if rank == 0:
@@ -888,7 +888,7 @@ def main():
     del baseline_model
     free_hpu_memory()
 
-    # ========== STEP 6: Load FRESH model + Apply Quantization ==========
+                                                                         
     print_section("STEP 6: APPLYING GROUP-WISE MIXED-PRECISION QUANTIZATION (CPU)", rank)
 
     if rank == 0:
@@ -914,7 +914,7 @@ def main():
         logger.info(f"Quantization complete in {quantize_time_s:.2f}s (CPU)")
         logger.info(f"  {bits_to_mb(orig_bits):.2f} MB → {bits_to_mb(quant_bits):.2f} MB ({compression_ratio:.2f}x)")
 
-    # ========== STEP 7: Evaluate Quantized Model ==========
+                                                            
     print_section("STEP 7: EVALUATING QUANTIZED MODEL (HPU)", rank)
 
     if rank == 0:
@@ -925,10 +925,10 @@ def main():
         batch_size=args.batch_size
     )
 
-    # Calculate quantized throughput
-    throughput_after = num_samples / eval_time_after  # samples/second
+                                    
+    throughput_after = num_samples / eval_time_after                  
 
-    # Save quantized model
+                          
     bits_str = '_'.join(str(b) for b in cluster_bits)
     quant_save_dir = os.path.join(MODELS_DIR, f"{model_key}_quantized_{strategy_name}_bits{bits_str}_g{group_size}")
     if rank == 0:
@@ -953,7 +953,7 @@ def main():
             json.dump(quant_config, f, indent=2)
         logger.info(f"Quantized model saved: {quant_save_dir}")
 
-    # ========== STEP 8-9: Results & Save ==========
+                                                    
     if rank == 0:
         acc_drop = acc_before - acc_after
         acc_drop_pct = (acc_drop / acc_before * 100.0) if acc_before > 0 else 0.0
@@ -990,7 +990,7 @@ def main():
             quality = "POOR - Significant degradation"
         logger.info(f"  Quality:         {quality}")
 
-        # Save results
+                      
         logger.info("=" * 70)
         logger.info("SAVING RESULTS")
         logger.info("=" * 70)
@@ -1063,7 +1063,7 @@ def main():
 
         logger.info(f"Results saved: {log_path}")
 
-        # Save summary
+                      
         summary_log = os.path.join(LOG_DIR, f"boolq_evaluation_results_{timestamp}.txt")
         with open(summary_log, "w") as f:
             f.write(f"PMPQ BoolQ Evaluation Results — {timestamp}\n")
@@ -1083,7 +1083,7 @@ def main():
         logger.info("")
         logger.info("Phase 2 BoolQ evaluation complete!")
 
-    # ========== STEP 10: Interactive Text Generation ==========
+                                                                
     if rank == 0 and not dist.is_initialized():
         print_section("STEP 10: INTERACTIVE TEXT GENERATION", rank)
 
@@ -1205,7 +1205,7 @@ def main():
                             print(text)
                         continue
 
-                    # Regular generation on HPU
+                                               
                     inputs = tokenizer(prompt, return_tensors="pt")
                     input_ids = inputs["input_ids"].to("hpu")
                     with torch.no_grad():
@@ -1217,7 +1217,7 @@ def main():
                     print(f"\n[{active_name} OUTPUT]:")
                     print(text)
 
-    # Cleanup
+             
     if dist.is_initialized():
         dist.destroy_process_group()
 

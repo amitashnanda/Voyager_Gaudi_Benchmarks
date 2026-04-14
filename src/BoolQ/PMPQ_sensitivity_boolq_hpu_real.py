@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+                      
 """
 PMPQ_sensitivity_boolq_hpu_real.py
 
@@ -41,7 +41,7 @@ import torch.nn as nn
 from datasets import load_dataset
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
-# Optional Habana imports (safe fallback on non-HPU systems)
+                                                            
 try:
     import habana_frameworks.torch.hpu as hthpu
     import habana_frameworks.torch.core as htcore
@@ -51,15 +51,15 @@ except Exception:
     htcore = None
     HABANA_AVAILABLE = False
 
-# Try to import optimum-habana for model adaptation
+                                                   
 try:
     from optimum.habana.transformers.modeling_utils import adapt_transformers_to_gaudi
     adapt_transformers_to_gaudi()
 except Exception:
     pass
 
-# Constants for BoolQ evaluation
-MAX_LENGTH = 512  # Appropriate for BoolQ's shorter passages
+                                
+MAX_LENGTH = 512                                            
 
 LLAMA_LINEAR_SUFFIXES = (
     "self_attn.q_proj",
@@ -178,7 +178,7 @@ def evaluate_boolq_accuracy(
     model.eval()
     model.to(device)
 
-    # Initialize inference mode on HPU
+                                      
     if HABANA_AVAILABLE and device.type == "hpu":
         try:
             htcore.hpu_set_env()
@@ -203,13 +203,13 @@ def evaluate_boolq_accuracy(
     t0 = time.time()
 
     with torch.no_grad():
-        # Process in batches
+                            
         for batch_start in range(0, total, batch_size):
             batch_end = min(batch_start + batch_size, total)
             batch_samples = [samples[i] for i in range(batch_start, batch_end)]
             actual_batch_size = len(batch_samples)
 
-            # Prepare all texts and metadata for this batch
+                                                           
             all_texts = []
             prompt_lens = []
             answers = []
@@ -217,46 +217,46 @@ def evaluate_boolq_accuracy(
             for sample in batch_samples:
                 passage = sample["passage"]
                 question = sample["question"]
-                answer = sample["answer"]  # True or False
+                answer = sample["answer"]                 
                 answers.append(answer)
 
-                # Format prompt with proper prefix
+                                                  
                 prompt = f"Passage: {passage}\nQuestion: {question}\nAnswer:"
 
-                # Get prompt length
+                                   
                 prompt_enc = tokenizer(prompt, add_special_tokens=True)
                 prompt_len = len(prompt_enc["input_ids"])
                 prompt_lens.append(prompt_len)
 
-                # Add both candidates for this sample (lowercase)
+                                                                 
                 all_texts.append(prompt + " yes")
                 all_texts.append(prompt + " no")
 
-            # Tokenize entire batch (actual_batch_size × 2 texts)
+                                                                 
             batch = tokenizer(all_texts, return_tensors="pt", padding=True,
                             truncation=True, max_length=MAX_LENGTH)
 
             input_ids = batch["input_ids"].to(device)
             attention_mask = batch["attention_mask"].to(device)
 
-            # Single forward pass for all candidates in batch
+                                                             
             outputs = model(input_ids, attention_mask=attention_mask)
 
             if use_mark_step and HABANA_AVAILABLE and device.type == "hpu":
                 htcore.mark_step()
 
-            # Move to CPU for log-likelihood computation
+                                                        
             logits = outputs.logits.float().cpu()
             input_ids_cpu = batch["input_ids"]
             attn_cpu = batch["attention_mask"]
 
-            # Process each sample in the batch
+                                              
             for idx in range(actual_batch_size):
                 yes_idx = idx * 2
                 no_idx = idx * 2 + 1
                 prompt_len = prompt_lens[idx]
 
-                # Compute log-likelihood for "yes"
+                                                  
                 seq_len_yes = int(attn_cpu[yes_idx].sum().item())
                 ans_len_yes = seq_len_yes - prompt_len
                 if ans_len_yes > 0:
@@ -268,7 +268,7 @@ def evaluate_boolq_accuracy(
                 else:
                     ll_yes = float("-inf")
 
-                # Compute log-likelihood for "no"
+                                                 
                 seq_len_no = int(attn_cpu[no_idx].sum().item())
                 ans_len_no = seq_len_no - prompt_len
                 if ans_len_no > 0:
@@ -280,7 +280,7 @@ def evaluate_boolq_accuracy(
                 else:
                     ll_no = float("-inf")
 
-                # Predict: True if "yes" more likely, False if "no" more likely
+                                                                               
                 predicted = (ll_yes > ll_no)
                 if predicted == answers[idx]:
                     correct += 1
@@ -326,7 +326,7 @@ def apply_magnitude_pruning_linear(linear: nn.Linear, sparsity: float) -> None:
         return
     if keep >= n:
         return
-    # kth largest magnitude == threshold
+                                        
     thresh = torch.topk(flat.abs(), k=keep, largest=True).values[-1]
     mask = (flat.abs() >= thresh).to(w.dtype)
     linear.weight.data.mul_(mask.view_as(w))
@@ -375,7 +375,7 @@ def main():
     dataset = load_boolq_dataset(split=args.split)
     logger.info(f"Loaded BoolQ {args.split} split: {len(dataset)} samples")
 
-    # Baseline accuracy
+                       
     base_model = AutoModelForCausalLM.from_pretrained(args.model_name_or_path)
     base_model = cast_model_dtype(base_model, args.dtype)
     baseline_acc = evaluate_boolq_accuracy(
@@ -385,7 +385,7 @@ def main():
     del base_model
     free_hpu_memory()
 
-    # Determine candidate modules (from a fresh CPU model)
+                                                          
     probe_model = AutoModelForCausalLM.from_pretrained(args.model_name_or_path)
     candidates = list_candidate_linear_modules(probe_model)
     del probe_model
@@ -406,7 +406,7 @@ def main():
         submod = get_module_by_name(model, mod_name)
         assert isinstance(submod, nn.Linear), f"Expected nn.Linear at {mod_name}, got {type(submod)}"
 
-        # Prune on CPU before moving to device
+                                              
         model.to("cpu")
         apply_magnitude_pruning_linear(submod, args.sparsity)
 
@@ -415,8 +415,8 @@ def main():
             desc=f"Pruned {mod_name}", max_samples=args.max_samples, batch_size=args.batch_size
         )
 
-        # Sensitivity = baseline_acc - pruned_acc
-        # Positive sensitivity = accuracy dropped → layer is important
+                                                 
+                                                                      
         delta = float(baseline_acc - acc)
         sensitivities[mod_name] = delta
         logger.info(f"  Sensitivity[{mod_name}] = {delta:+.6f}")
@@ -427,7 +427,7 @@ def main():
     dt_all = time.time() - t_all
     logger.info(f"Completed sensitivities in {dt_all:.1f}s")
 
-    # Save results
+                  
     out_dir.mkdir(parents=True, exist_ok=True)
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
 
@@ -447,7 +447,7 @@ def main():
             "baseline_accuracy": baseline_acc,
             "max_length": MAX_LENGTH,
             "timestamp": ts,
-            "official_score": 57.83,  # TinyLlama-1.1B-3T official BoolQ score
+            "official_score": 57.83,                                          
         },
         "sensitivities": sensitivities,
     }
